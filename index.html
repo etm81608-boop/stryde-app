@@ -2,30 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Stryde Elite - Master Command Center</title>
+    <title>Stryde Elite - Master Command</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .day-card { min-width: 150px; transition: 0.2s; cursor: pointer; border-width: 2px; height: 100px; display: flex; flex-direction: column; justify-content: space-between; }
-        .active-day { border-color: #2563eb; background-color: #eff6ff; }
+        .day-card { min-width: 160px; transition: 0.2s; cursor: pointer; border-width: 2px; height: 110px; display: flex; flex-direction: column; justify-content: space-between; }
+        .active-day { border-color: #2563eb; background-color: #eff6ff; box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.2); }
         .module-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; }
         .label-caps { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
         .hidden { display: none; }
         .tab-btn { padding: 12px 24px; font-weight: 800; font-size: 12px; border-bottom: 3px solid transparent; transition: 0.2s; }
         .tab-active { border-bottom-color: #2563eb; color: #2563eb; }
-        .checklist-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: 0.1s; border: 1px solid transparent; }
-        .checklist-item:hover { background: #f1f5f9; border-color: #e2e8f0; }
+        .checklist-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: 0.1s; }
+        .checklist-item:hover { background: #f1f5f9; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .workout-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 10px; line-height: 1.2; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen font-sans text-slate-900 overflow-hidden">
 
     <nav class="bg-white border-b sticky top-0 z-30 shadow-sm">
         <div class="px-6 py-2 bg-slate-900 text-white flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-            <span class="flex items-center gap-2">⚡ Stryde Elite Command</span>
-            <div class="flex gap-6 items-center">
-                <button onclick="changeWeek(-7)" class="hover:text-blue-400">◀ Prev Week</button>
-                <span id="weekDisplay" class="text-blue-400 italic text-xs"></span>
+            <span>⚡ Stryde Elite Command Center</span>
+            <div class="flex gap-6">
+                <button onclick="changeWeek(-7)" class="hover:text-blue-400">◀ Previous Week</button>
+                <span id="weekDisplay" class="text-blue-400 italic font-black"></span>
                 <button onclick="changeWeek(7)" class="hover:text-blue-400">Next Week ▶</button>
             </div>
         </div>
@@ -34,76 +35,74 @@
                 <button id="btn-view-builder" onclick="switchView('builder')" class="tab-btn tab-active">WORKOUT BUILDER</button>
                 <button id="btn-view-roster" onclick="switchView('roster')" class="tab-btn">TEAM DATABASE</button>
             </div>
-            <div class="flex gap-3 items-center">
-                <span class="text-[10px] font-black text-slate-400 uppercase">Focusing on: <span id="viewingRunner" class="text-blue-600 italic">Whole Team</span></span>
-                <button onclick="emailAllWorkouts()" class="bg-blue-600 text-white px-5 py-2 rounded-full text-[10px] font-black uppercase shadow-md hover:bg-blue-700 active:scale-95 transition">
-                    Email Blast ✉️
-                </button>
+            <div class="flex gap-4 items-center">
+                <span class="text-[10px] font-black text-slate-400 uppercase">Focus: <span id="viewingRunner" class="text-blue-600 italic">All Runners</span></span>
+                <button onclick="emailAllWorkouts()" class="bg-blue-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase shadow-lg hover:bg-blue-700 transition">Email Blast ✉️</button>
             </div>
         </div>
         <div id="weeklyRibbon" class="flex overflow-x-auto p-3 gap-3 bg-slate-50 border-b shadow-inner"></div>
     </nav>
 
-    <div class="flex flex-col lg:flex-row h-[calc(100vh-210px)]">
+    <div class="flex flex-col lg:flex-row h-[calc(100vh-215px)]">
         
-        <aside class="w-full lg:w-80 bg-white border-r overflow-y-auto p-5 shrink-0 shadow-sm">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="label-caps !mb-0">Daily Assignments</h2>
-                <span id="rosterCount" class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-black">0</span>
+        <aside class="w-full lg:w-80 bg-white border-r overflow-y-auto p-5 shrink-0">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="label-caps !mb-0">Today's Roster</h2>
+                <span id="rosterCount" class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-black">0</span>
             </div>
-            <div id="sideRoster" class="space-y-4"></div>
+            <div id="sideRoster" class="space-y-3"></div>
         </aside>
 
         <main class="flex-1 overflow-y-auto p-6 lg:p-10">
             
             <div id="view-builder" class="max-w-3xl mx-auto space-y-6">
-                <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 space-y-8">
+                <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 space-y-6">
                     <div class="space-y-3">
                         <div class="flex justify-between items-end px-1">
-                            <label class="label-caps !text-blue-600">Step 1: Select Runners</label>
-                            <div class="flex gap-3">
-                                <button onclick="selectAll(true)" class="text-[9px] font-black text-blue-500 hover:underline uppercase">Select All</button>
-                                <button onclick="selectAll(false)" class="text-[9px] font-black text-slate-400 hover:underline uppercase">Clear</button>
+                            <label class="label-caps !text-blue-600">1. Select Runners</label>
+                            <div class="flex gap-3 text-[9px] font-black uppercase">
+                                <button onclick="selectAll(true)" class="text-blue-500">All</button>
+                                <button onclick="selectAll(false)" class="text-slate-400">None</button>
                             </div>
                         </div>
-                        <div id="athleteChecklist" class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-4 border-2 border-slate-50 rounded-2xl bg-slate-50/50"></div>
+                        <div id="athleteChecklist" class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-4 border rounded-2xl bg-slate-50/50"></div>
                     </div>
 
                     <div class="space-y-4">
-                        <label class="label-caps !text-blue-600 px-1">Step 2: Define Workout</label>
+                        <label class="label-caps !text-blue-600">2. Workout Details</label>
                         <div class="module-card border-blue-100 bg-blue-50/30">
-                            <input type="text" id="manDist" placeholder="Main Set (e.g. 8x800m @ 2:30)" class="w-full p-3 border rounded-xl font-bold text-sm shadow-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <input type="text" id="manDist" placeholder="Main Set (e.g. 12x200m @ 30s)" class="w-full p-3 border rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-400">
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="module-card"><label class="label-caps">Warmup</label><input type="text" id="warmup" placeholder="2mi Easy" class="w-full bg-transparent font-bold text-xs border-b border-slate-200 outline-none"></div>
-                            <div class="module-card"><label class="label-caps text-purple-500">Lift</label><input type="text" id="lift" placeholder="Leg Day" class="w-full bg-transparent font-bold text-xs border-b border-slate-200 outline-none"></div>
-                            <div class="module-card"><label class="label-caps text-emerald-500">Cooldown</label><input type="text" id="cooldown" placeholder="1mi Barefoot" class="w-full bg-transparent font-bold text-xs border-b border-slate-200 outline-none"></div>
+                            <div class="module-card"><label class="label-caps">Warmup</label><input type="text" id="warmup" class="w-full bg-transparent font-bold text-xs border-b border-slate-200 outline-none"></div>
+                            <div class="module-card"><label class="label-caps text-purple-500">Lift</label><input type="text" id="lift" class="w-full bg-transparent font-bold text-xs border-b border-slate-200 outline-none"></div>
+                            <div class="module-card"><label class="label-caps text-emerald-500">Cooldown</label><input type="text" id="cooldown" class="w-full bg-transparent font-bold text-xs border-b border-slate-200 outline-none"></div>
                         </div>
                     </div>
-                    <button onclick="saveWorkout()" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl hover:bg-black uppercase tracking-widest text-sm transition active:scale-[0.98]">Assign Workout</button>
+                    <button onclick="saveWorkout()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-black uppercase text-sm tracking-widest">Assign Workout</button>
                 </div>
             </div>
 
             <div id="view-roster" class="hidden max-w-5xl mx-auto space-y-8">
                 <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
-                    <h2 class="text-xl font-black mb-6 italic text-blue-600 uppercase tracking-tight">Add Runner Profile</h2>
+                    <h2 class="text-xl font-black mb-6 text-blue-600 uppercase italic">Add New Runner</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <input type="text" id="db-name" placeholder="Name" class="p-2.5 border rounded-xl font-bold">
-                        <input type="email" id="db-email" placeholder="Email" class="p-2.5 border rounded-xl">
+                        <input type="text" id="db-name" placeholder="Name" class="p-3 border rounded-xl font-bold">
+                        <input type="email" id="db-email" placeholder="Email" class="p-3 border rounded-xl">
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <input type="number" id="db-years" placeholder="Years Running" class="p-2.5 border rounded-xl">
-                        <input type="text" id="db-events" placeholder="Events" class="p-2.5 border rounded-xl">
+                        <input type="number" id="db-years" placeholder="Years Running" class="p-3 border rounded-xl">
+                        <input type="text" id="db-events" placeholder="Primary Events" class="p-3 border rounded-xl">
                     </div>
-                    <textarea id="db-pbs" placeholder="PRs..." class="w-full p-3 border rounded-xl h-20 text-sm mb-4"></textarea>
-                    <div class="flex gap-6 mb-6 p-4 bg-slate-50 rounded-xl">
-                        <label class="text-xs font-bold flex items-center gap-2"><input type="checkbox" id="s-xc"> XC</label>
-                        <label class="text-xs font-bold flex items-center gap-2"><input type="checkbox" id="s-winter"> Winter</label>
-                        <label class="text-xs font-bold flex items-center gap-2"><input type="checkbox" id="s-spring"> Spring</label>
+                    <textarea id="db-pbs" placeholder="Personal Bests..." class="w-full p-3 border rounded-xl h-20 mb-4"></textarea>
+                    <div class="flex gap-6 p-4 bg-slate-50 rounded-xl mb-6">
+                        <label class="text-xs font-bold flex items-center gap-2 cursor-pointer"><input type="checkbox" id="s-xc"> XC</label>
+                        <label class="text-xs font-bold flex items-center gap-2 cursor-pointer"><input type="checkbox" id="s-winter"> Winter</label>
+                        <label class="text-xs font-bold flex items-center gap-2 cursor-pointer"><input type="checkbox" id="s-spring"> Spring</label>
                     </div>
-                    <button onclick="addAthlete()" class="bg-blue-600 text-white px-10 py-3.5 rounded-2xl font-black uppercase text-xs shadow-lg hover:bg-blue-700">Save Runner</button>
+                    <button onclick="addAthlete()" class="bg-blue-600 text-white px-10 py-3 rounded-xl font-black uppercase text-xs shadow-md">Add Runner to Team</button>
                 </div>
-                <div id="db-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div id="db-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
         </main>
     </div>
@@ -121,12 +120,13 @@
             if(view === 'builder') renderAthleteChecklist();
         }
 
-        function setRunnerFilter(name) {
+        function setFocus(name) {
             currentRunnerFilter = name;
-            document.getElementById('viewingRunner').innerText = name || "Whole Team";
+            document.getElementById('viewingRunner').innerText = name || "All Runners";
             renderWeek();
         }
 
+        // DATABASE OPERATIONS
         function addAthlete() {
             const athlete = {
                 id: Date.now(),
@@ -137,39 +137,42 @@
                 pbs: document.getElementById('db-pbs').value,
                 seasons: { xc: document.getElementById('s-xc').checked, winter: document.getElementById('s-winter').checked, spring: document.getElementById('s-spring').checked }
             };
-            if(!athlete.name || !athlete.email) return alert("Name/Email required!");
+            if(!athlete.name) return alert("Please enter a name.");
             let roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
             roster.push(athlete);
             localStorage.setItem('myRoster', JSON.stringify(roster));
             renderRoster();
             renderAthleteChecklist();
-            setRunnerFilter(athlete.name);
             ['db-name','db-email','db-years','db-events','db-pbs'].forEach(id => document.getElementById(id).value = '');
+            ['s-xc','s-winter','s-spring'].forEach(id => document.getElementById(id).checked = false);
+        }
+
+        function deleteAthlete(id) {
+            if(!confirm("Are you sure you want to remove this runner?")) return;
+            let roster = JSON.parse(localStorage.getItem('myRoster') || "[]").filter(a => a.id !== id);
+            localStorage.setItem('myRoster', JSON.stringify(roster));
+            if(currentRunnerFilter) setFocus(null);
+            renderRoster(); renderAthleteChecklist();
         }
 
         function renderRoster() {
             const roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
             document.getElementById('db-list').innerHTML = roster.map(a => `
-                <div class="p-5 bg-white border rounded-3xl shadow-sm border-l-8 border-blue-500 relative cursor-pointer" onclick="setRunnerFilter('${a.name}')">
-                    <button onclick="event.stopPropagation(); deleteAthlete(${a.id})" class="absolute top-4 right-4 text-slate-300 hover:text-red-500">✕</button>
-                    <div class="font-black uppercase text-base">${a.name}</div>
-                    <div class="text-[10px] text-blue-600 font-bold mb-2">${a.email}</div>
-                    <div class="text-[10px] bg-slate-50 p-2 rounded-lg italic text-slate-400">${a.pbs || 'No PRs'}</div>
-                    <div class="flex gap-1 mt-3">
-                        ${a.seasons.xc ? '<span class="bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-[8px] font-black">XC</span>' : ''}
-                        ${a.seasons.winter ? '<span class="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[8px] font-black">WTR</span>' : ''}
-                        ${a.seasons.spring ? '<span class="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[8px] font-black">SPR</span>' : ''}
+                <div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm border-l-8 border-blue-500 relative cursor-pointer hover:shadow-md transition" onclick="setFocus('${a.name}')">
+                    <button onclick="event.stopPropagation(); deleteAthlete(${a.id})" class="absolute top-3 right-3 text-slate-300 hover:text-red-500 font-bold text-lg">✕</button>
+                    <div class="font-black uppercase text-sm mb-1">${a.name}</div>
+                    <div class="text-[9px] text-blue-500 font-bold mb-2">${a.email || 'No Email'}</div>
+                    <div class="text-[9px] text-slate-400 italic truncate mb-2">${a.pbs || 'No PRs listed'}</div>
+                    <div class="flex gap-1">
+                        ${a.seasons.xc ? '<span class="bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded text-[7px] font-black">XC</span>' : ''}
+                        ${a.seasons.winter ? '<span class="bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded text-[7px] font-black">WTR</span>' : ''}
+                        ${a.seasons.spring ? '<span class="bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded text-[7px] font-black">SPR</span>' : ''}
                     </div>
                 </div>
             `).join('');
         }
 
-        function deleteAthlete(id) {
-            let roster = JSON.parse(localStorage.getItem('myRoster') || "[]").filter(a => a.id !== id);
-            localStorage.setItem('myRoster', JSON.stringify(roster));
-            renderRoster(); renderAthleteChecklist();
-        }
-
+        // WORKOUT OPERATIONS
         function renderAthleteChecklist() {
             const roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
             document.getElementById('athleteChecklist').innerHTML = roster.map(a => `
@@ -181,10 +184,10 @@
 
         function saveWorkout() {
             const selected = Array.from(document.querySelectorAll('.athlete-cb:checked')).map(cb => ({ name: cb.value, email: cb.dataset.email }));
-            if(selected.length === 0) return alert("Select runners!");
-            const workoutBase = { date: selDate, main: document.getElementById('manDist').value, warmup: document.getElementById('warmup').value, lift: document.getElementById('lift').value, cooldown: document.getElementById('cooldown').value };
+            if(selected.length === 0) return alert("Select runners first!");
+            const workout = { date: selDate, main: document.getElementById('manDist').value, warmup: document.getElementById('warmup').value, lift: document.getElementById('lift').value, cooldown: document.getElementById('cooldown').value };
             let history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
-            selected.forEach(s => history.unshift({ ...workoutBase, name: s.name, email: s.email }));
+            selected.forEach(s => history.unshift({ ...workout, name: s.name, email: s.email }));
             localStorage.setItem('myWorkouts', JSON.stringify(history));
             document.querySelectorAll('.athlete-cb').forEach(cb => cb.checked = false);
             renderWeek();
@@ -194,8 +197,8 @@
             const history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
             const todays = history.filter(w => w.date === selDate);
             todays.forEach(w => {
-                const body = encodeURIComponent(`Workout for ${w.date}:\n\nWarmup: ${w.warmup}\nMain: ${w.main}\nLift: ${w.lift}\nCooldown: ${w.cooldown}`);
-                window.open(`mailto:${w.email}?subject=Workout&body=${body}`, '_blank');
+                const body = encodeURIComponent(`Workout for ${w.date}:\n\nWarmup: ${w.warmup}\nMain Set: ${w.main}\nLift: ${w.lift}\nCooldown: ${w.cooldown}`);
+                window.open(`mailto:${w.email}?subject=Today's Workout&body=${body}`, '_blank');
             });
         }
 
@@ -210,25 +213,19 @@
             for (let i = 0; i < 7; i++) {
                 const day = new Date(curStart); day.setDate(day.getDate() + i);
                 const dStr = day.toISOString().split('T')[0];
-                const active = dStr === selDate;
-                
-                // DATA LOGIC: What to show in the ribbon?
-                // If a runner is selected, show THEIR workout. If not, show the first workout found.
                 const dayWorkouts = history.filter(h => h.date === dStr);
-                const focusWorkout = currentRunnerFilter ? dayWorkouts.find(w => w.name === currentRunnerFilter) : dayWorkouts[0];
-
+                const focus = currentRunnerFilter ? dayWorkouts.find(w => w.name === currentRunnerFilter) : dayWorkouts[0];
+                
                 const card = document.createElement('div');
-                card.className = `day-card p-3 rounded-2xl bg-white shadow-sm border-2 ${active ? 'active-day shadow-md' : 'border-slate-50'}`;
+                card.className = `day-card p-3 rounded-2xl bg-white border-2 ${dStr === selDate ? 'active-day shadow-md' : 'border-slate-50'}`;
                 card.onclick = () => { selDate = dStr; renderWeek(); };
                 card.innerHTML = `
-                    <div class="flex justify-between items-start">
+                    <div class="flex justify-between items-center">
                         <span class="text-[9px] font-black uppercase text-slate-400">${day.toLocaleDateString(undefined, {weekday:'short'})} ${day.getDate()}</span>
-                        ${dayWorkouts.length > 1 ? `<span class="text-[8px] bg-blue-600 text-white px-1 rounded-full">+${dayWorkouts.length-1}</span>` : ''}
+                        ${dayWorkouts.length > 1 ? `<span class="bg-blue-600 text-white text-[7px] px-1 rounded-full">+${dayWorkouts.length-1}</span>` : ''}
                     </div>
-                    <div class="text-[10px] font-bold text-slate-700 leading-tight truncate-3-lines mt-1">
-                        ${focusWorkout ? focusWorkout.main : '<span class="text-slate-300 font-normal">No Workout</span>'}
-                    </div>
-                    <div class="text-[8px] font-black text-blue-500 uppercase mt-auto truncate">${focusWorkout && !currentRunnerFilter ? focusWorkout.name : ''}</div>
+                    <div class="workout-text font-bold text-slate-700">${focus ? focus.main : '<span class="text-slate-200">Off</span>'}</div>
+                    <div class="text-[7px] font-black text-blue-500 uppercase truncate">${focus && !currentRunnerFilter ? focus.name : ''}</div>
                 `;
                 ribbon.appendChild(card);
             }
@@ -245,9 +242,9 @@
                 grouped[w.main].names.push(w.name);
             });
             document.getElementById('sideRoster').innerHTML = Object.values(grouped).map(g => `
-                <div class="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm border-l-4 border-blue-500">
-                    <div class="text-[11px] font-black text-blue-600 uppercase mb-2">🏃 ${g.main}</div>
-                    <div class="flex flex-wrap gap-1">${g.names.map(n => `<span class="bg-slate-100 px-2 py-0.5 rounded text-[9px] font-bold text-slate-600 border border-slate-200">${n.split(' ')[0]}</span>`).join('')}</div>
+                <div class="p-3 bg-white border border-slate-100 rounded-xl shadow-sm border-l-4 border-blue-500">
+                    <div class="text-[10px] font-black text-blue-600 uppercase mb-2">🏃 ${g.main}</div>
+                    <div class="flex flex-wrap gap-1">${g.names.map(n => `<span class="bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded text-[8px] font-bold text-slate-500">${n.split(' ')[0]}</span>`).join('')}</div>
                 </div>
             `).join('');
         }
