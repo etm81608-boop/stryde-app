@@ -20,6 +20,7 @@
         <div class="p-4 flex justify-between items-center border-b border-slate-800">
             <h1 class="font-black italic tracking-tighter text-xl text-blue-400">STRYDE ELITE</h1>
             <div class="flex gap-4 items-center">
+                <button onclick="emailAllWorkouts()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase shadow-lg transition">Email Blast ✉️</button>
                 <button onclick="undo()" id="undoBtn" class="bg-red-600/20 text-red-400 px-3 py-1 rounded text-[10px] font-black opacity-50" disabled>UNDO ↺</button>
                 <div class="flex bg-slate-800 rounded-lg p-1">
                     <button onclick="switchView('builder')" id="nav-builder" class="text-[10px] font-black uppercase px-4 py-2 rounded-md active-tab">Builder</button>
@@ -33,7 +34,7 @@
     <main class="p-6 max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
         
         <aside class="w-full lg:w-72 shrink-0">
-            <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Today's Active Groups</h2>
+            <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Selected Day's Groups</h2>
             <div id="sideRoster" class="space-y-3"></div>
         </aside>
 
@@ -68,7 +69,7 @@
                         <input type="email" id="run-email" placeholder="Email Address" class="p-3 bg-slate-800 border-none rounded-xl text-white placeholder-slate-500">
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <input type="text" id="run-pbs" placeholder="PRs (e.g. 5k: 15:40, 1600m: 4:20)" class="p-3 bg-slate-800 border-none rounded-xl text-white placeholder-slate-500 text-sm">
+                        <input type="text" id="run-pbs" placeholder="PRs (e.g. 5k: 15:40)" class="p-3 bg-slate-800 border-none rounded-xl text-white placeholder-slate-500 text-sm">
                         <div class="flex items-center gap-4 px-2">
                             <label class="text-[10px] font-black flex items-center gap-1"><input type="checkbox" id="s-xc" class="rounded"> XC</label>
                             <label class="text-[10px] font-black flex items-center gap-1 text-blue-300"><input type="checkbox" id="s-w" class="rounded"> WTR</label>
@@ -151,11 +152,15 @@
             const main = document.getElementById('workMain').value;
             if(checked.length === 0 || !main) return alert("Select runners and enter a workout description.");
 
+            let runners = JSON.parse(localStorage.getItem('runners') || "[]");
             let workouts = JSON.parse(localStorage.getItem('workouts') || "[]");
+            
             checked.forEach(box => {
+                const runnerInfo = runners.find(r => r.name === box.value);
                 workouts.unshift({ 
                     date: selDate, 
                     name: box.value, 
+                    email: runnerInfo ? runnerInfo.email : '',
                     main: main,
                     warm: document.getElementById('workWarm').value,
                     lift: document.getElementById('workLift').value,
@@ -168,11 +173,32 @@
             renderAll();
         }
 
+        function emailAllWorkouts() {
+            const workouts = JSON.parse(localStorage.getItem('workouts') || "[]");
+            const todayWorkouts = workouts.filter(w => w.date === selDate);
+            
+            if(todayWorkouts.length === 0) return alert("No workouts assigned for this day.");
+
+            todayWorkouts.forEach(w => {
+                if(!w.email) return;
+                const subject = encodeURIComponent(`Workout for ${w.date}`);
+                const body = encodeURIComponent(
+                    `Hey ${w.name},\n\n` +
+                    `Here is your training for today:\n\n` +
+                    `WARMUP: ${w.warm || 'Standard'}\n` +
+                    `MAIN SET: ${w.main}\n` +
+                    `LIFT: ${w.lift || 'None'}\n` +
+                    `COOLDOWN: ${w.cool || 'Standard'}\n\n` +
+                    `Go get it!`
+                );
+                window.open(`mailto:${w.email}?subject=${subject}&body=${body}`, '_blank');
+            });
+        }
+
         function renderAll() {
             const runners = JSON.parse(localStorage.getItem('runners') || "[]");
             const workouts = JSON.parse(localStorage.getItem('workouts') || "[]");
 
-            // 1. Roster Tab
             document.getElementById('rosterList').innerHTML = runners.map(r => `
                 <div class="card border-l-8 border-blue-500">
                     <div class="flex justify-between items-start">
@@ -191,17 +217,15 @@
                 </div>
             `).join('');
 
-            // 2. Checklist (Builder)
             document.getElementById('checklist').innerHTML = runners.map(r => `
                 <label class="flex items-center gap-2 p-3 bg-white border rounded-xl text-[11px] font-bold cursor-pointer">
                     <input type="checkbox" class="run-check" value="${r.name}"> ${r.name}
                 </label>
             `).join('');
 
-            // 3. Weekly Ribbon
             const ribbon = document.getElementById('weekRibbon');
             ribbon.innerHTML = '';
-            let start = new Date(); start.setDate(start.getDate() - 3); // Show 3 days ago to 3 days ahead
+            let start = new Date(); start.setDate(start.getDate() - 3);
             for(let i=0; i<7; i++) {
                 let d = new Date(start); d.setDate(d.getDate() + i);
                 let dStr = d.toISOString().split('T')[0];
@@ -212,20 +236,18 @@
                 card.onclick = () => { selDate = dStr; renderAll(); };
                 card.innerHTML = `
                     <div class="text-[9px] font-black text-slate-400 uppercase">${d.toLocaleDateString(undefined, {weekday:'short', day:'numeric'})}</div>
-                    <div class="text-[10px] font-bold text-slate-700 leading-tight truncate-3-lines">${dayWork ? dayWork.main : 'OFF'}</div>
-                    <div class="text-[7px] font-black text-blue-500 uppercase truncate">${dayWork ? dayWork.name : ''}</div>
+                    <div class="text-[10px] font-bold text-slate-700 leading-tight">${dayWork ? dayWork.main : 'OFF'}</div>
                 `;
                 ribbon.appendChild(card);
             }
 
-            // 4. Daily Sidebar
             const todayWorkouts = workouts.filter(w => w.date === selDate);
             document.getElementById('sideRoster').innerHTML = todayWorkouts.map(w => `
                 <div class="p-3 bg-white border rounded-xl border-l-4 border-blue-500 shadow-sm">
                     <div class="text-[10px] font-black text-blue-600 uppercase mb-1">${w.name}</div>
                     <div class="text-[11px] font-bold text-slate-700">${w.main}</div>
                 </div>
-            `).join('') || '<p class="text-[10px] text-slate-400 italic">Rest Day / No Workouts</p>';
+            `).join('') || '<p class="text-[10px] text-slate-400 italic">No Workouts Today</p>';
         }
 
         function toggleAllCheckboxes() {
