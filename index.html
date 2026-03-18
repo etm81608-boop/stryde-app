@@ -2,29 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Stryde Elite - Master Command</title>
+    <title>Stryde Elite - Master Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .day-card { min-width: 130px; transition: 0.2s; cursor: pointer; border-width: 2px; }
+        .day-card { min-width: 140px; transition: 0.2s; cursor: pointer; border-width: 2px; }
         .active-day { border-color: #2563eb; background-color: #eff6ff; }
-        .module-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; }
-        .label-caps { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+        .module-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; }
+        .label-caps { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
         .hidden { display: none; }
-        .tab-btn { padding: 10px 20px; font-weight: bold; font-size: 12px; border-bottom: 3px solid transparent; }
+        .tab-btn { padding: 12px 24px; font-weight: 800; font-size: 12px; border-bottom: 3px solid transparent; transition: 0.2s; }
         .tab-active { border-bottom-color: #2563eb; color: #2563eb; }
-        .checklist-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-        .checklist-item:hover { background: #f1f5f9; }
+        .checklist-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: 0.1s; border: 1px solid transparent; }
+        .checklist-item:hover { background: #f1f5f9; border-color: #e2e8f0; }
+        .checklist-item input:checked + span { color: #2563eb; font-weight: 900; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen font-sans text-slate-900 overflow-hidden">
 
-    <nav class="bg-white border-b sticky top-0 z-30 shadow-md">
+    <nav class="bg-white border-b sticky top-0 z-30 shadow-sm">
         <div class="px-6 py-2 bg-slate-900 text-white flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-            <span>Stryde Elite Command Center</span>
-            <div class="flex gap-4">
-                <button onclick="changeWeek(-7)">◀ Prev Week</button>
-                <span id="weekDisplay" class="text-blue-400 font-black italic"></span>
-                <button onclick="changeWeek(7)">Next Week ▶</button>
+            <span class="flex items-center gap-2">⚡ Stryde Elite Command</span>
+            <div class="flex gap-6 items-center">
+                <button onclick="changeWeek(-7)" class="hover:text-blue-400">◀ Prev Week</button>
+                <span id="weekDisplay" class="text-blue-400 italic text-xs"></span>
+                <button onclick="changeWeek(7)" class="hover:text-blue-400">Next Week ▶</button>
             </div>
         </div>
         <div class="flex bg-white px-6 border-b justify-between items-center">
@@ -32,76 +35,107 @@
                 <button id="btn-view-builder" onclick="switchView('builder')" class="tab-btn tab-active">WORKOUT BUILDER</button>
                 <button id="btn-view-roster" onclick="switchView('roster')" class="tab-btn">TEAM DATABASE</button>
             </div>
-            <button onclick="emailAllWorkouts()" class="mr-6 bg-blue-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase shadow-lg hover:bg-blue-700 transition">
-                Draft All Athlete Emails ✉️
-            </button>
+            <div class="flex gap-3">
+                <button onclick="emailAllWorkouts()" class="bg-blue-600 text-white px-5 py-2 rounded-full text-[10px] font-black uppercase shadow-md hover:bg-blue-700 active:scale-95 transition">
+                    Email Blast Today ✉️
+                </button>
+            </div>
         </div>
         <div id="weeklyRibbon" class="flex overflow-x-auto p-3 gap-3 bg-slate-50 border-b shadow-inner"></div>
     </nav>
 
-    <div class="flex flex-col lg:flex-row h-[calc(100vh-180px)]">
+    <div class="flex flex-col lg:flex-row h-[calc(100vh-185px)]">
         
-        <aside class="w-full lg:w-80 bg-white border-r overflow-y-auto p-4 shrink-0 shadow-sm">
-            <h2 class="label-caps mb-4">Daily Assignments (<span id="rosterCount">0</span>)</h2>
+        <aside class="w-full lg:w-80 bg-white border-r overflow-y-auto p-5 shrink-0 shadow-sm">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="label-caps !mb-0">Daily Assignments</h2>
+                <span id="rosterCount" class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-black">0</span>
+            </div>
             <div id="sideRoster" class="space-y-4"></div>
         </aside>
 
         <main class="flex-1 overflow-y-auto p-6 lg:p-10">
             
-            <div id="view-builder" class="max-w-2xl mx-auto space-y-6">
-                <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 space-y-6">
-                    <div class="space-y-2">
-                        <label class="label-caps text-blue-600">Assign To Runners:</label>
-                        <div id="athleteChecklist" class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto p-3 border rounded-xl bg-slate-50"></div>
+            <div id="view-builder" class="max-w-3xl mx-auto space-y-6">
+                <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 space-y-8">
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-end px-1">
+                            <label class="label-caps !text-blue-600">Step 1: Select Runners</label>
+                            <div class="flex gap-3">
+                                <button onclick="selectAll(true)" class="text-[9px] font-black text-blue-500 hover:underline uppercase">Select All</button>
+                                <button onclick="selectAll(false)" class="text-[9px] font-black text-slate-400 hover:underline uppercase">Clear</button>
+                            </div>
+                        </div>
+                        <div id="athleteChecklist" class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-4 border-2 border-slate-50 rounded-2xl bg-slate-50/50">
+                            </div>
                     </div>
 
-                    <div class="module-card border-blue-100 bg-blue-50/50 space-y-3">
-                        <input type="text" id="manDist" placeholder="Main Set (e.g. 10x400m @ 75s)" class="w-full p-2 border rounded font-bold text-sm">
-                        <div class="grid grid-cols-3 gap-2">
-                             <input type="text" id="warmup" placeholder="Warmup" class="p-2 border rounded text-xs">
-                             <input type="text" id="lift" placeholder="Lift" class="p-2 border rounded text-xs">
-                             <input type="text" id="cooldown" placeholder="Cooldown" class="p-2 border rounded text-xs">
+                    <div class="space-y-4">
+                        <label class="label-caps !text-blue-600 px-1">Step 2: Define Workout</label>
+                        
+                        <div class="module-card border-blue-100 bg-blue-50/30">
+                            <input type="text" id="manDist" placeholder="Main Set (e.g. 8x800m @ 2:30)" class="w-full p-3 border rounded-xl font-bold text-sm shadow-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="module-card">
+                                <label class="label-caps">Warmup</label>
+                                <input type="text" id="warmup" placeholder="e.g. 2mi + Drills" class="w-full bg-transparent font-bold text-xs border-b border-slate-200 py-1 outline-none">
+                            </div>
+                            <div class="module-card">
+                                <label class="label-caps text-purple-500">Lift/Strength</label>
+                                <input type="text" id="lift" placeholder="e.g. Power Cleans" class="w-full bg-transparent font-bold text-xs border-b border-slate-200 py-1 outline-none">
+                            </div>
+                            <div class="module-card">
+                                <label class="label-caps text-emerald-500">Cooldown</label>
+                                <input type="text" id="cooldown" placeholder="e.g. 10m Barefoot" class="w-full bg-transparent font-bold text-xs border-b border-slate-200 py-1 outline-none">
+                            </div>
                         </div>
                     </div>
-                    <button onclick="saveWorkout()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-black uppercase text-sm">Assign to Selection</button>
+
+                    <button onclick="saveWorkout()" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl hover:bg-black uppercase tracking-widest text-sm transition active:scale-[0.98]">
+                        Assign Workout to Selection
+                    </button>
                 </div>
             </div>
 
-            <div id="view-roster" class="hidden max-w-4xl mx-auto space-y-6">
+            <div id="view-roster" class="hidden max-w-5xl mx-auto space-y-8">
                 <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
-                    <h2 class="text-xl font-black mb-4 italic text-blue-600">Add Athlete to Roster</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <h2 class="text-xl font-black mb-6 italic text-blue-600 uppercase tracking-tight">Runner Profile Creator</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                         <div>
                             <label class="label-caps">Full Name</label>
-                            <input type="text" id="db-name" placeholder="John Doe" class="w-full p-2 border rounded font-bold">
+                            <input type="text" id="db-name" placeholder="Steve Prefontaine" class="w-full p-2.5 border rounded-xl font-bold">
                         </div>
                         <div>
                             <label class="label-caps">Email Address</label>
-                            <input type="email" id="db-email" placeholder="john@email.com" class="w-full p-2 border rounded">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="label-caps">Years Running</label>
-                            <input type="number" id="db-years" placeholder="2" class="w-full p-2 border rounded">
+                            <input type="email" id="db-email" placeholder="steve@track.com" class="w-full p-2.5 border rounded-xl">
                         </div>
                         <div>
                             <label class="label-caps">Primary Events</label>
-                            <input type="text" id="db-events" placeholder="800m / 1600m" class="w-full p-2 border rounded">
+                            <input type="text" id="db-events" placeholder="5000m / 10000m" class="w-full p-2.5 border rounded-xl">
                         </div>
                     </div>
-                    <div class="mb-4">
-                        <label class="label-caps">Personal Bests (PRs)</label>
-                        <textarea id="db-pbs" placeholder="1600: 4:45, 3200: 10:15..." class="w-full p-2 border rounded h-16 text-sm"></textarea>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="label-caps">Years Running</label>
+                            <input type="number" id="db-years" placeholder="4" class="w-full p-2.5 border rounded-xl">
+                        </div>
+                        <div class="flex gap-6 items-center pt-4">
+                            <label class="label-caps !mb-0">Seasons:</label>
+                            <label class="text-xs font-bold flex items-center gap-2 cursor-pointer"><input type="checkbox" id="s-xc" class="w-4 h-4"> XC</label>
+                            <label class="text-xs font-bold flex items-center gap-2 cursor-pointer"><input type="checkbox" id="s-winter" class="w-4 h-4"> Winter</label>
+                            <label class="text-xs font-bold flex items-center gap-2 cursor-pointer"><input type="checkbox" id="s-spring" class="w-4 h-4"> Spring</label>
+                        </div>
                     </div>
-                    <div class="flex gap-6 mb-6 p-4 bg-slate-50 rounded-xl">
-                        <label class="label-caps">Active Seasons:</label>
-                        <label class="text-xs font-bold flex items-center gap-1"><input type="checkbox" id="s-xc"> XC</label>
-                        <label class="text-xs font-bold flex items-center gap-1"><input type="checkbox" id="s-winter"> Winter</label>
-                        <label class="text-xs font-bold flex items-center gap-1"><input type="checkbox" id="s-spring"> Spring</label>
+                    <div class="mb-6">
+                        <label class="label-caps">Personal Bests & Notes</label>
+                        <textarea id="db-pbs" placeholder="Mile: 3:54, 5k: 13:22..." class="w-full p-3 border rounded-xl h-24 text-sm font-medium"></textarea>
                     </div>
-                    <button onclick="addAthlete()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-black uppercase text-xs shadow-md">Save Runner Profile</button>
+                    <button onclick="addAthlete()" class="bg-blue-600 text-white px-10 py-3.5 rounded-2xl font-black uppercase text-xs shadow-lg hover:bg-blue-700 transition">Save to Team Roster</button>
                 </div>
+
                 <div id="db-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
         </main>
@@ -111,13 +145,16 @@
         let curStart = new Date();
         let selDate = new Date().toISOString().split('T')[0];
 
+        // VIEW NAVIGATION
         function switchView(view) {
             document.getElementById('view-builder').classList.toggle('hidden', view !== 'builder');
             document.getElementById('view-roster').classList.toggle('hidden', view !== 'roster');
             document.getElementById('btn-view-builder').classList.toggle('tab-active', view === 'builder');
             document.getElementById('btn-view-roster').classList.toggle('tab-active', view === 'roster');
+            if(view === 'builder') renderAthleteChecklist();
         }
 
+        // DATABASE LOGIC
         function addAthlete() {
             const athlete = {
                 id: Date.now(),
@@ -133,7 +170,7 @@
                 }
             };
 
-            if(!athlete.name || !athlete.email) return alert("Name and Email are required!");
+            if(!athlete.name || !athlete.email) return alert("Runner Name and Email are required!");
 
             let roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
             roster.push(athlete);
@@ -150,81 +187,124 @@
         function renderRoster() {
             const roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
             document.getElementById('db-list').innerHTML = roster.map(a => `
-                <div class="p-4 bg-white border rounded-xl shadow-sm border-l-4 border-blue-500 relative">
-                    <button onclick="deleteAthlete(${a.id})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500">✕</button>
-                    <div class="font-black uppercase text-sm text-slate-800">${a.name}</div>
-                    <div class="text-[10px] text-blue-600 font-bold mb-1">${a.email}</div>
-                    <div class="text-[10px] text-slate-500 font-bold">Years: ${a.years || 'N/A'} | ${a.events || 'No events listed'}</div>
-                    <div class="text-[10px] italic text-slate-400 mt-1">${a.pbs || ''}</div>
-                    <div class="flex gap-2 mt-2">
-                        ${a.seasons.xc ? '<span class="bg-orange-100 text-orange-600 px-1 rounded text-[8px] font-bold">XC</span>' : ''}
-                        ${a.seasons.winter ? '<span class="bg-blue-100 text-blue-600 px-1 rounded text-[8px] font-bold">WTR</span>' : ''}
-                        ${a.seasons.spring ? '<span class="bg-green-100 text-green-600 px-1 rounded text-[8px] font-bold">SPR</span>' : ''}
+                <div class="p-5 bg-white border border-slate-100 rounded-3xl shadow-sm border-l-8 border-blue-500 relative hover:shadow-md transition">
+                    <button onclick="deleteAthlete(${a.id})" class="absolute top-4 right-4 text-slate-300 hover:text-red-500">✕</button>
+                    <div class="font-black uppercase text-base text-slate-800">${a.name}</div>
+                    <div class="text-[11px] text-blue-600 font-bold mb-3">${a.email}</div>
+                    
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="text-[10px] text-slate-500 font-bold">Years: <span class="text-slate-900">${a.years || '0'}</span></div>
+                        <div class="text-[10px] text-slate-500 font-bold">Events: <span class="text-slate-900">${a.events || 'N/A'}</span></div>
+                    </div>
+                    
+                    <div class="text-[10px] bg-slate-50 p-2 rounded-lg italic text-slate-600 mb-3">${a.pbs || 'No PRs recorded.'}</div>
+                    
+                    <div class="flex justify-between items-center">
+                        <div class="flex gap-1">
+                            ${a.seasons.xc ? '<span class="bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-[8px] font-black">XC</span>' : ''}
+                            ${a.seasons.winter ? '<span class="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[8px] font-black">WTR</span>' : ''}
+                            ${a.seasons.spring ? '<span class="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[8px] font-black">SPR</span>' : ''}
+                        </div>
+                        <button onclick="exportCSV('${a.name}')" class="text-[9px] font-black text-slate-400 hover:text-blue-500 uppercase tracking-tighter">Download CSV</button>
                     </div>
                 </div>
             `).join('');
         }
 
         function deleteAthlete(id) {
+            if(!confirm("Delete this runner from database?")) return;
             let roster = JSON.parse(localStorage.getItem('myRoster') || "[]").filter(a => a.id !== id);
             localStorage.setItem('myRoster', JSON.stringify(roster));
             renderRoster(); renderAthleteChecklist();
         }
 
+        // WORKOUT BUILDER LOGIC
         function renderAthleteChecklist() {
             const roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
-            document.getElementById('athleteChecklist').innerHTML = roster.sort((a,b) => a.name.localeCompare(b.name)).map(a => `
-                <label class="checklist-item text-[11px] font-bold">
-                    <input type="checkbox" class="athlete-cb" data-email="${a.email}" value="${a.name}"> ${a.name}
+            const container = document.getElementById('athleteChecklist');
+            if(roster.length === 0) return container.innerHTML = '<p class="text-[10px] text-slate-400 col-span-full italic p-2">No runners in database yet.</p>';
+            
+            container.innerHTML = roster.sort((a,b) => a.name.localeCompare(b.name)).map(a => `
+                <label class="checklist-item">
+                    <input type="checkbox" class="athlete-cb" data-email="${a.email}" value="${a.name}">
+                    <span class="text-[11px] font-bold truncate text-slate-700">${a.name}</span>
                 </label>
             `).join('');
         }
 
+        function selectAll(bool) { document.querySelectorAll('.athlete-cb').forEach(cb => cb.checked = bool); }
+
         function saveWorkout() {
-            const selected = Array.from(document.querySelectorAll('.athlete-cb:checked')).map(cb => ({ name: cb.value, email: cb.dataset.email }));
-            if(selected.length === 0) return alert("Please select at least one runner!");
+            const checked = document.querySelectorAll('.athlete-cb:checked');
+            const selected = Array.from(checked).map(cb => ({ name: cb.value, email: cb.dataset.email }));
+            
+            if(selected.length === 0) return alert("Select at least one runner!");
+            if(!document.getElementById('manDist').value) return alert("Enter a Main Set description!");
             
             const workoutBase = {
                 date: selDate,
                 main: document.getElementById('manDist').value,
                 warmup: document.getElementById('warmup').value,
                 lift: document.getElementById('lift').value,
-                cooldown: document.getElementById('cooldown').value
+                cooldown: document.getElementById('cooldown').value,
+                timestamp: Date.now()
             };
 
             let history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
             selected.forEach(s => history.unshift({ ...workoutBase, name: s.name, email: s.email }));
             localStorage.setItem('myWorkouts', JSON.stringify(history));
             
+            // Reset fields
             document.querySelectorAll('.athlete-cb').forEach(cb => cb.checked = false);
+            ['manDist','warmup','lift','cooldown'].forEach(id => document.getElementById(id).value = '');
+            
             renderWeek();
         }
 
+        // EMAIL BLAST
         function emailAllWorkouts() {
             const roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
             const history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
-            if(roster.length === 0) return alert("No runners found.");
+            const todays = history.filter(w => w.date === selDate);
 
-            roster.forEach(runner => {
-                const todays = history.filter(w => w.name === runner.name && w.date === selDate);
-                if(todays.length > 0) {
-                    const w = todays[0];
-                    const subject = encodeURIComponent(`Workout Plan: ${w.date}`);
-                    const body = encodeURIComponent(
-                        `Coach's Training Plan for ${w.date}\n\n` +
-                        `Runner: ${runner.name}\n` +
-                        `--------------------------\n` +
-                        `Warmup: ${w.warmup || 'As directed'}\n` +
-                        `MAIN WORKOUT: ${w.main}\n` +
-                        `Strength/Lift: ${w.lift || 'None'}\n` +
-                        `Cooldown: ${w.cooldown || '1-2 miles easy'}\n\n` +
-                        `Go get 'em!\n- Coach`
-                    );
-                    window.open(`mailto:${runner.email}?subject=${subject}&body=${body}`, '_blank');
-                }
+            if(todays.length === 0) return alert("No workouts assigned for this date.");
+
+            todays.forEach(w => {
+                const subject = encodeURIComponent(`Workout for ${w.date}`);
+                const body = encodeURIComponent(
+                    `Hi ${w.name},\n\n` +
+                    `Here is your workout for today (${w.date}):\n\n` +
+                    `WARMUP: ${w.warmup || 'Standard warmup'}\n` +
+                    `MAIN SET: ${w.main}\n` +
+                    `LIFT: ${w.lift || 'No lift today'}\n` +
+                    `COOLDOWN: ${w.cooldown || 'Standard cooldown'}\n\n` +
+                    `Go get it!\n- Coach`
+                );
+                window.open(`mailto:${w.email}?subject=${subject}&body=${body}`, '_blank');
             });
         }
 
+        // EXPORT TO CSV
+        function exportCSV(name) {
+            const history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
+            const myData = history.filter(w => w.name === name).sort((a,b) => new Date(a.date) - new Date(b.date));
+            
+            if(myData.length === 0) return alert("No history found for this runner.");
+
+            let csv = "Date,Main Workout,Warmup,Lift,Cooldown\n";
+            myData.forEach(w => {
+                csv += `"${w.date}","${w.main}","${w.warmup}","${w.lift}","${w.cooldown}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${name}_Training_Log.csv`;
+            a.click();
+        }
+
+        // CALENDAR & SIDEBAR UI
         function changeWeek(d) { curStart.setDate(curStart.getDate() + d); renderWeek(); }
 
         function renderWeek() {
@@ -240,9 +320,13 @@
                 const active = dStr === selDate;
                 const plans = history.filter(h => h.date === dStr);
                 const card = document.createElement('div');
-                card.className = `day-card p-3 rounded-xl bg-white shadow-sm border-2 ${active ? 'active-day' : 'border-slate-50'}`;
+                card.className = `day-card p-4 rounded-2xl bg-white shadow-sm border-2 ${active ? 'active-day shadow-md' : 'border-slate-50'}`;
                 card.onclick = () => { selDate = dStr; renderWeek(); };
-                card.innerHTML = `<div class="text-[9px] font-black uppercase text-slate-400">${day.toLocaleDateString(undefined, {weekday:'short'})}</div><div class="text-sm font-black">${day.getDate()}</div><div class="text-[8px] mt-1 text-blue-600 font-bold">${plans.length} Assigned</div>`;
+                card.innerHTML = `
+                    <div class="text-[9px] font-black uppercase text-slate-400 mb-1">${day.toLocaleDateString(undefined, {weekday:'short'})}</div>
+                    <div class="text-sm font-black">${day.getDate()}</div>
+                    <div class="text-[9px] mt-2 text-blue-600 font-black">${plans.length} Assigned</div>
+                `;
                 ribbon.appendChild(card);
             }
             refreshSide();
@@ -252,20 +336,31 @@
             const history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
             const todays = history.filter(w => w.date === selDate);
             document.getElementById('rosterCount').innerText = todays.length;
+
             const grouped = {};
             todays.forEach(w => {
-                const key = w.main + w.lift;
-                if(!grouped[key]) grouped[key] = { main: w.main, names: [] };
+                const key = w.main + (w.lift || "");
+                if(!grouped[key]) grouped[key] = { main: w.main, lift: w.lift, names: [] };
                 grouped[key].names.push(w.name);
             });
-            document.getElementById('sideRoster').innerHTML = Object.values(grouped).map(g => `
-                <div class="p-3 bg-white border-l-4 border-blue-500 rounded shadow-sm">
-                    <div class="text-[10px] font-black uppercase text-blue-600 mb-1">🏃 ${g.main}</div>
-                    <div class="flex flex-wrap gap-1">${g.names.map(n => `<span class="bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-bold text-slate-600">${n.split(' ')[0]}</span>`).join('')}</div>
+
+            const container = document.getElementById('sideRoster');
+            if(todays.length === 0) {
+                container.innerHTML = '<div class="text-center py-10 text-slate-300 italic text-xs">No assignments for this day</div>';
+                return;
+            }
+
+            container.innerHTML = Object.values(grouped).map(g => `
+                <div class="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm border-l-4 border-blue-500">
+                    <div class="text-[11px] font-black text-blue-600 uppercase mb-2">🏃 ${g.main} ${g.lift ? ' | 🏋️ '+g.lift : ''}</div>
+                    <div class="flex flex-wrap gap-1.5">
+                        ${g.names.map(n => `<span class="bg-slate-100 px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 border border-slate-200">${n.split(' ')[0]}</span>`).join('')}
+                    </div>
                 </div>
             `).join('');
         }
 
+        // INIT
         renderRoster(); renderAthleteChecklist(); renderWeek();
     </script>
 </body>
