@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Stryde Elite - Coach Command</title>
+    <title>Stryde Elite - Master Command</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .day-card { min-width: 130px; transition: 0.2s; cursor: pointer; border-width: 2px; }
@@ -40,23 +40,27 @@
     </nav>
 
     <div class="flex flex-col lg:flex-row h-[calc(100vh-180px)]">
+        
         <aside class="w-full lg:w-80 bg-white border-r overflow-y-auto p-4 shrink-0 shadow-sm">
             <h2 class="label-caps mb-4">Daily Assignments (<span id="rosterCount">0</span>)</h2>
             <div id="sideRoster" class="space-y-4"></div>
         </aside>
 
         <main class="flex-1 overflow-y-auto p-6 lg:p-10">
+            
             <div id="view-builder" class="max-w-2xl mx-auto space-y-6">
                 <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 space-y-6">
                     <div class="space-y-2">
                         <label class="label-caps text-blue-600">Assign To Runners:</label>
                         <div id="athleteChecklist" class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto p-3 border rounded-xl bg-slate-50"></div>
                     </div>
-                    <div class="module-card border-blue-100 bg-blue-50/50">
-                        <input type="text" id="manDist" placeholder="Main Set (e.g. 10x400m @ Race Pace)" class="w-full p-2 border rounded font-bold text-sm mb-2">
-                        <div class="grid grid-cols-2 gap-2">
+
+                    <div class="module-card border-blue-100 bg-blue-50/50 space-y-3">
+                        <input type="text" id="manDist" placeholder="Main Set (e.g. 10x400m @ 75s)" class="w-full p-2 border rounded font-bold text-sm">
+                        <div class="grid grid-cols-3 gap-2">
                              <input type="text" id="warmup" placeholder="Warmup" class="p-2 border rounded text-xs">
-                             <input type="text" id="lift" placeholder="Lift/Strength" class="p-2 border rounded text-xs">
+                             <input type="text" id="lift" placeholder="Lift" class="p-2 border rounded text-xs">
+                             <input type="text" id="cooldown" placeholder="Cooldown" class="p-2 border rounded text-xs">
                         </div>
                     </div>
                     <button onclick="saveWorkout()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-black uppercase text-sm">Assign to Selection</button>
@@ -65,12 +69,38 @@
 
             <div id="view-roster" class="hidden max-w-4xl mx-auto space-y-6">
                 <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
-                    <h2 class="text-xl font-black mb-4">Add New Runner</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="db-name" placeholder="Full Name" class="p-2 border rounded">
-                        <input type="email" id="db-email" placeholder="Email Address" class="p-2 border rounded">
+                    <h2 class="text-xl font-black mb-4 italic text-blue-600">Add Athlete to Roster</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="label-caps">Full Name</label>
+                            <input type="text" id="db-name" placeholder="John Doe" class="w-full p-2 border rounded font-bold">
+                        </div>
+                        <div>
+                            <label class="label-caps">Email Address</label>
+                            <input type="email" id="db-email" placeholder="john@email.com" class="w-full p-2 border rounded">
+                        </div>
                     </div>
-                    <button onclick="addAthlete()" class="mt-4 bg-blue-600 text-white px-8 py-2 rounded font-bold uppercase text-xs">Save Runner</button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="label-caps">Years Running</label>
+                            <input type="number" id="db-years" placeholder="2" class="w-full p-2 border rounded">
+                        </div>
+                        <div>
+                            <label class="label-caps">Primary Events</label>
+                            <input type="text" id="db-events" placeholder="800m / 1600m" class="w-full p-2 border rounded">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="label-caps">Personal Bests (PRs)</label>
+                        <textarea id="db-pbs" placeholder="1600: 4:45, 3200: 10:15..." class="w-full p-2 border rounded h-16 text-sm"></textarea>
+                    </div>
+                    <div class="flex gap-6 mb-6 p-4 bg-slate-50 rounded-xl">
+                        <label class="label-caps">Active Seasons:</label>
+                        <label class="text-xs font-bold flex items-center gap-1"><input type="checkbox" id="s-xc"> XC</label>
+                        <label class="text-xs font-bold flex items-center gap-1"><input type="checkbox" id="s-winter"> Winter</label>
+                        <label class="text-xs font-bold flex items-center gap-1"><input type="checkbox" id="s-spring"> Spring</label>
+                    </div>
+                    <button onclick="addAthlete()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-black uppercase text-xs shadow-md">Save Runner Profile</button>
                 </div>
                 <div id="db-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
@@ -84,30 +114,53 @@
         function switchView(view) {
             document.getElementById('view-builder').classList.toggle('hidden', view !== 'builder');
             document.getElementById('view-roster').classList.toggle('hidden', view !== 'roster');
+            document.getElementById('btn-view-builder').classList.toggle('tab-active', view === 'builder');
+            document.getElementById('btn-view-roster').classList.toggle('tab-active', view === 'roster');
         }
 
         function addAthlete() {
-            const name = document.getElementById('db-name').value;
-            const email = document.getElementById('db-email').value;
-            if(!name || !email) return alert("Name and Email required!");
+            const athlete = {
+                id: Date.now(),
+                name: document.getElementById('db-name').value,
+                email: document.getElementById('db-email').value,
+                years: document.getElementById('db-years').value,
+                events: document.getElementById('db-events').value,
+                pbs: document.getElementById('db-pbs').value,
+                seasons: {
+                    xc: document.getElementById('s-xc').checked,
+                    winter: document.getElementById('s-winter').checked,
+                    spring: document.getElementById('s-spring').checked
+                }
+            };
+
+            if(!athlete.name || !athlete.email) return alert("Name and Email are required!");
+
             let roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
-            roster.push({ id: Date.now(), name, email });
+            roster.push(athlete);
             localStorage.setItem('myRoster', JSON.stringify(roster));
+            
             renderRoster();
             renderAthleteChecklist();
-            document.getElementById('db-name').value = '';
-            document.getElementById('db-email').value = '';
+            
+            // Clear inputs
+            ['db-name','db-email','db-years','db-events','db-pbs'].forEach(id => document.getElementById(id).value = '');
+            ['s-xc','s-winter','s-spring'].forEach(id => document.getElementById(id).checked = false);
         }
 
         function renderRoster() {
             const roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
             document.getElementById('db-list').innerHTML = roster.map(a => `
-                <div class="p-4 bg-white border rounded-xl shadow-sm flex justify-between items-center">
-                    <div>
-                        <div class="font-black uppercase text-sm">${a.name}</div>
-                        <div class="text-[10px] text-blue-500 font-bold">${a.email}</div>
+                <div class="p-4 bg-white border rounded-xl shadow-sm border-l-4 border-blue-500 relative">
+                    <button onclick="deleteAthlete(${a.id})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500">✕</button>
+                    <div class="font-black uppercase text-sm text-slate-800">${a.name}</div>
+                    <div class="text-[10px] text-blue-600 font-bold mb-1">${a.email}</div>
+                    <div class="text-[10px] text-slate-500 font-bold">Years: ${a.years || 'N/A'} | ${a.events || 'No events listed'}</div>
+                    <div class="text-[10px] italic text-slate-400 mt-1">${a.pbs || ''}</div>
+                    <div class="flex gap-2 mt-2">
+                        ${a.seasons.xc ? '<span class="bg-orange-100 text-orange-600 px-1 rounded text-[8px] font-bold">XC</span>' : ''}
+                        ${a.seasons.winter ? '<span class="bg-blue-100 text-blue-600 px-1 rounded text-[8px] font-bold">WTR</span>' : ''}
+                        ${a.seasons.spring ? '<span class="bg-green-100 text-green-600 px-1 rounded text-[8px] font-bold">SPR</span>' : ''}
                     </div>
-                    <button onclick="deleteAthlete(${a.id})" class="text-red-300 hover:text-red-500 text-xs">Remove</button>
                 </div>
             `).join('');
         }
@@ -120,7 +173,7 @@
 
         function renderAthleteChecklist() {
             const roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
-            document.getElementById('athleteChecklist').innerHTML = roster.map(a => `
+            document.getElementById('athleteChecklist').innerHTML = roster.sort((a,b) => a.name.localeCompare(b.name)).map(a => `
                 <label class="checklist-item text-[11px] font-bold">
                     <input type="checkbox" class="athlete-cb" data-email="${a.email}" value="${a.name}"> ${a.name}
                 </label>
@@ -129,45 +182,44 @@
 
         function saveWorkout() {
             const selected = Array.from(document.querySelectorAll('.athlete-cb:checked')).map(cb => ({ name: cb.value, email: cb.dataset.email }));
-            if(selected.length === 0) return alert("Select runners!");
+            if(selected.length === 0) return alert("Please select at least one runner!");
             
             const workoutBase = {
                 date: selDate,
                 main: document.getElementById('manDist').value,
                 warmup: document.getElementById('warmup').value,
-                lift: document.getElementById('lift').value
+                lift: document.getElementById('lift').value,
+                cooldown: document.getElementById('cooldown').value
             };
 
             let history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
             selected.forEach(s => history.unshift({ ...workoutBase, name: s.name, email: s.email }));
             localStorage.setItem('myWorkouts', JSON.stringify(history));
+            
+            document.querySelectorAll('.athlete-cb').forEach(cb => cb.checked = false);
             renderWeek();
         }
 
-        // THE EMAIL BLAST LOGIC
         function emailAllWorkouts() {
             const roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
             const history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
-
-            if(roster.length === 0) return alert("No runners in database.");
+            if(roster.length === 0) return alert("No runners found.");
 
             roster.forEach(runner => {
-                // Get workouts for THIS runner only
-                const myWorkouts = history.filter(w => w.name === runner.name && w.date === selDate);
-                
-                if(myWorkouts.length > 0) {
-                    const w = myWorkouts[0];
-                    const subject = encodeURIComponent(`Workout for ${w.date}`);
+                const todays = history.filter(w => w.name === runner.name && w.date === selDate);
+                if(todays.length > 0) {
+                    const w = todays[0];
+                    const subject = encodeURIComponent(`Workout Plan: ${w.date}`);
                     const body = encodeURIComponent(
-                        `Hi ${runner.name},\n\n` +
-                        `Here is your workout for ${w.date}:\n\n` +
-                        `Warmup: ${w.warmup || 'None'}\n` +
-                        `MAIN SET: ${w.main}\n` +
-                        `Lift: ${w.lift || 'None'}\n\n` +
-                        `Good luck!\n- Coach`
+                        `Coach's Training Plan for ${w.date}\n\n` +
+                        `Runner: ${runner.name}\n` +
+                        `--------------------------\n` +
+                        `Warmup: ${w.warmup || 'As directed'}\n` +
+                        `MAIN WORKOUT: ${w.main}\n` +
+                        `Strength/Lift: ${w.lift || 'None'}\n` +
+                        `Cooldown: ${w.cooldown || '1-2 miles easy'}\n\n` +
+                        `Go get 'em!\n- Coach`
                     );
-                    
-                    // This opens the default mail app
                     window.open(`mailto:${runner.email}?subject=${subject}&body=${body}`, '_blank');
                 }
             });
@@ -179,7 +231,8 @@
             const ribbon = document.getElementById('weeklyRibbon');
             ribbon.innerHTML = '';
             const history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
-            document.getElementById('weekDisplay').innerText = curStart.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+            const end = new Date(curStart); end.setDate(end.getDate() + 6);
+            document.getElementById('weekDisplay').innerText = `${curStart.toLocaleDateString(undefined, {month:'short', day:'numeric'})} - ${end.toLocaleDateString(undefined, {month:'short', day:'numeric'})}`;
 
             for (let i = 0; i < 7; i++) {
                 const day = new Date(curStart); day.setDate(day.getDate() + i);
@@ -189,7 +242,7 @@
                 const card = document.createElement('div');
                 card.className = `day-card p-3 rounded-xl bg-white shadow-sm border-2 ${active ? 'active-day' : 'border-slate-50'}`;
                 card.onclick = () => { selDate = dStr; renderWeek(); };
-                card.innerHTML = `<div class="text-[9px] font-black uppercase text-slate-400">${day.toLocaleDateString(undefined, {weekday:'short'})}</div><div class="text-sm font-black">${day.getDate()}</div><div class="text-[8px] mt-1 text-blue-600">${plans.length} Assigned</div>`;
+                card.innerHTML = `<div class="text-[9px] font-black uppercase text-slate-400">${day.toLocaleDateString(undefined, {weekday:'short'})}</div><div class="text-sm font-black">${day.getDate()}</div><div class="text-[8px] mt-1 text-blue-600 font-bold">${plans.length} Assigned</div>`;
                 ribbon.appendChild(card);
             }
             refreshSide();
@@ -199,10 +252,16 @@
             const history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
             const todays = history.filter(w => w.date === selDate);
             document.getElementById('rosterCount').innerText = todays.length;
-            document.getElementById('sideRoster').innerHTML = todays.map(w => `
-                <div class="p-3 bg-white border-l-4 border-blue-500 rounded shadow-sm text-[10px]">
-                    <div class="font-black uppercase">${w.name}</div>
-                    <div class="text-slate-500">${w.main}</div>
+            const grouped = {};
+            todays.forEach(w => {
+                const key = w.main + w.lift;
+                if(!grouped[key]) grouped[key] = { main: w.main, names: [] };
+                grouped[key].names.push(w.name);
+            });
+            document.getElementById('sideRoster').innerHTML = Object.values(grouped).map(g => `
+                <div class="p-3 bg-white border-l-4 border-blue-500 rounded shadow-sm">
+                    <div class="text-[10px] font-black uppercase text-blue-600 mb-1">🏃 ${g.main}</div>
+                    <div class="flex flex-wrap gap-1">${g.names.map(n => `<span class="bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-bold text-slate-600">${n.split(' ')[0]}</span>`).join('')}</div>
                 </div>
             `).join('');
         }
