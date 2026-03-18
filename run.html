@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stryde Elite - Coach Command</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .day-card { min-width: 130px; transition: 0.2s; cursor: pointer; border-width: 2px; }
+        .active-day { border-color: #2563eb; background-color: #eff6ff; }
+        .module-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; }
+        .label-caps { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+        .hidden { display: none; }
+        .tab-btn { padding: 10px 20px; font-weight: bold; font-size: 12px; border-bottom: 3px solid transparent; }
+        .tab-active { border-bottom-color: #2563eb; color: #2563eb; }
+        .checklist-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .checklist-item:hover { background: #f1f5f9; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900 overflow-hidden">
+
+    <nav class="bg-white border-b sticky top-0 z-30 shadow-md">
+        <div class="px-6 py-2 bg-slate-900 text-white flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
+            <span>Stryde Elite Command Center</span>
+            <div class="flex gap-4">
+                <button onclick="changeWeek(-7)">◀ Prev Week</button>
+                <span id="weekDisplay" class="text-blue-400 font-black italic"></span>
+                <button onclick="changeWeek(7)">Next Week ▶</button>
+            </div>
+        </div>
+        <div class="flex bg-white px-6 border-b justify-between items-center">
+            <div class="flex">
+                <button id="btn-view-builder" onclick="switchView('builder')" class="tab-btn tab-active">WORKOUT BUILDER</button>
+                <button id="btn-view-roster" onclick="switchView('roster')" class="tab-btn">TEAM DATABASE</button>
+            </div>
+            <button onclick="emailAllWorkouts()" class="mr-6 bg-blue-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase shadow-lg hover:bg-blue-700 transition">
+                Draft All Athlete Emails ✉️
+            </button>
+        </div>
+        <div id="weeklyRibbon" class="flex overflow-x-auto p-3 gap-3 bg-slate-50 border-b shadow-inner"></div>
+    </nav>
+
+    <div class="flex flex-col lg:flex-row h-[calc(100vh-180px)]">
+        <aside class="w-full lg:w-80 bg-white border-r overflow-y-auto p-4 shrink-0 shadow-sm">
+            <h2 class="label-caps mb-4">Daily Assignments (<span id="rosterCount">0</span>)</h2>
+            <div id="sideRoster" class="space-y-4"></div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-6 lg:p-10">
+            <div id="view-builder" class="max-w-2xl mx-auto space-y-6">
+                <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 space-y-6">
+                    <div class="space-y-2">
+                        <label class="label-caps text-blue-600">Assign To Runners:</label>
+                        <div id="athleteChecklist" class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto p-3 border rounded-xl bg-slate-50"></div>
+                    </div>
+                    <div class="module-card border-blue-100 bg-blue-50/50">
+                        <input type="text" id="manDist" placeholder="Main Set (e.g. 10x400m @ Race Pace)" class="w-full p-2 border rounded font-bold text-sm mb-2">
+                        <div class="grid grid-cols-2 gap-2">
+                             <input type="text" id="warmup" placeholder="Warmup" class="p-2 border rounded text-xs">
+                             <input type="text" id="lift" placeholder="Lift/Strength" class="p-2 border rounded text-xs">
+                        </div>
+                    </div>
+                    <button onclick="saveWorkout()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-black uppercase text-sm">Assign to Selection</button>
+                </div>
+            </div>
+
+            <div id="view-roster" class="hidden max-w-4xl mx-auto space-y-6">
+                <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
+                    <h2 class="text-xl font-black mb-4">Add New Runner</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" id="db-name" placeholder="Full Name" class="p-2 border rounded">
+                        <input type="email" id="db-email" placeholder="Email Address" class="p-2 border rounded">
+                    </div>
+                    <button onclick="addAthlete()" class="mt-4 bg-blue-600 text-white px-8 py-2 rounded font-bold uppercase text-xs">Save Runner</button>
+                </div>
+                <div id="db-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let curStart = new Date();
+        let selDate = new Date().toISOString().split('T')[0];
+
+        function switchView(view) {
+            document.getElementById('view-builder').classList.toggle('hidden', view !== 'builder');
+            document.getElementById('view-roster').classList.toggle('hidden', view !== 'roster');
+        }
+
+        function addAthlete() {
+            const name = document.getElementById('db-name').value;
+            const email = document.getElementById('db-email').value;
+            if(!name || !email) return alert("Name and Email required!");
+            let roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
+            roster.push({ id: Date.now(), name, email });
+            localStorage.setItem('myRoster', JSON.stringify(roster));
+            renderRoster();
+            renderAthleteChecklist();
+            document.getElementById('db-name').value = '';
+            document.getElementById('db-email').value = '';
+        }
+
+        function renderRoster() {
+            const roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
+            document.getElementById('db-list').innerHTML = roster.map(a => `
+                <div class="p-4 bg-white border rounded-xl shadow-sm flex justify-between items-center">
+                    <div>
+                        <div class="font-black uppercase text-sm">${a.name}</div>
+                        <div class="text-[10px] text-blue-500 font-bold">${a.email}</div>
+                    </div>
+                    <button onclick="deleteAthlete(${a.id})" class="text-red-300 hover:text-red-500 text-xs">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteAthlete(id) {
+            let roster = JSON.parse(localStorage.getItem('myRoster') || "[]").filter(a => a.id !== id);
+            localStorage.setItem('myRoster', JSON.stringify(roster));
+            renderRoster(); renderAthleteChecklist();
+        }
+
+        function renderAthleteChecklist() {
+            const roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
+            document.getElementById('athleteChecklist').innerHTML = roster.map(a => `
+                <label class="checklist-item text-[11px] font-bold">
+                    <input type="checkbox" class="athlete-cb" data-email="${a.email}" value="${a.name}"> ${a.name}
+                </label>
+            `).join('');
+        }
+
+        function saveWorkout() {
+            const selected = Array.from(document.querySelectorAll('.athlete-cb:checked')).map(cb => ({ name: cb.value, email: cb.dataset.email }));
+            if(selected.length === 0) return alert("Select runners!");
+            
+            const workoutBase = {
+                date: selDate,
+                main: document.getElementById('manDist').value,
+                warmup: document.getElementById('warmup').value,
+                lift: document.getElementById('lift').value
+            };
+
+            let history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
+            selected.forEach(s => history.unshift({ ...workoutBase, name: s.name, email: s.email }));
+            localStorage.setItem('myWorkouts', JSON.stringify(history));
+            renderWeek();
+        }
+
+        // THE EMAIL BLAST LOGIC
+        function emailAllWorkouts() {
+            const roster = JSON.parse(localStorage.getItem('myRoster') || "[]");
+            const history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
+
+            if(roster.length === 0) return alert("No runners in database.");
+
+            roster.forEach(runner => {
+                // Get workouts for THIS runner only
+                const myWorkouts = history.filter(w => w.name === runner.name && w.date === selDate);
+                
+                if(myWorkouts.length > 0) {
+                    const w = myWorkouts[0];
+                    const subject = encodeURIComponent(`Workout for ${w.date}`);
+                    const body = encodeURIComponent(
+                        `Hi ${runner.name},\n\n` +
+                        `Here is your workout for ${w.date}:\n\n` +
+                        `Warmup: ${w.warmup || 'None'}\n` +
+                        `MAIN SET: ${w.main}\n` +
+                        `Lift: ${w.lift || 'None'}\n\n` +
+                        `Good luck!\n- Coach`
+                    );
+                    
+                    // This opens the default mail app
+                    window.open(`mailto:${runner.email}?subject=${subject}&body=${body}`, '_blank');
+                }
+            });
+        }
+
+        function changeWeek(d) { curStart.setDate(curStart.getDate() + d); renderWeek(); }
+
+        function renderWeek() {
+            const ribbon = document.getElementById('weeklyRibbon');
+            ribbon.innerHTML = '';
+            const history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
+            document.getElementById('weekDisplay').innerText = curStart.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+
+            for (let i = 0; i < 7; i++) {
+                const day = new Date(curStart); day.setDate(day.getDate() + i);
+                const dStr = day.toISOString().split('T')[0];
+                const active = dStr === selDate;
+                const plans = history.filter(h => h.date === dStr);
+                const card = document.createElement('div');
+                card.className = `day-card p-3 rounded-xl bg-white shadow-sm border-2 ${active ? 'active-day' : 'border-slate-50'}`;
+                card.onclick = () => { selDate = dStr; renderWeek(); };
+                card.innerHTML = `<div class="text-[9px] font-black uppercase text-slate-400">${day.toLocaleDateString(undefined, {weekday:'short'})}</div><div class="text-sm font-black">${day.getDate()}</div><div class="text-[8px] mt-1 text-blue-600">${plans.length} Assigned</div>`;
+                ribbon.appendChild(card);
+            }
+            refreshSide();
+        }
+
+        function refreshSide() {
+            const history = JSON.parse(localStorage.getItem('myWorkouts') || "[]");
+            const todays = history.filter(w => w.date === selDate);
+            document.getElementById('rosterCount').innerText = todays.length;
+            document.getElementById('sideRoster').innerHTML = todays.map(w => `
+                <div class="p-3 bg-white border-l-4 border-blue-500 rounded shadow-sm text-[10px]">
+                    <div class="font-black uppercase">${w.name}</div>
+                    <div class="text-slate-500">${w.main}</div>
+                </div>
+            `).join('');
+        }
+
+        renderRoster(); renderAthleteChecklist(); renderWeek();
+    </script>
+</body>
+</html>
