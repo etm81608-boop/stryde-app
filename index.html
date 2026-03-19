@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elite Coach Portal & Reporting</title>
+    <title>Elite Coach Portal - Grouped Reports</title>
     <style>
         :root { --primary: #2563eb; --bg: #f1f5f9; --card: #ffffff; --text: #0f172a; --accent: #ef4444; --green: #16a34a; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 40px; }
@@ -13,29 +13,30 @@
         nav button.active { background: var(--primary); }
 
         .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; }
-        .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .card { background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .hidden { display: none; }
 
         input, textarea, select { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
         
-        /* Reports Table */
-        .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        .report-table th { background: #f8fafc; color: #64748b; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
-        .report-table th, .report-table td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
-        .report-table tr:nth-child(even) { background: #fdfdfd; }
+        /* New Grouped Report Styles */
+        .report-section { margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: white; }
+        .date-header { background: #334155; color: white; padding: 12px 15px; font-weight: bold; font-size: 1.1rem; display: flex; justify-content: space-between; }
+        
+        .report-table { width: 100%; border-collapse: collapse; }
+        .report-table th { background: #f8fafc; color: #64748b; text-transform: uppercase; font-size: 0.7rem; font-weight: 700; border-bottom: 2px solid #e2e8f0; }
+        .report-table th, .report-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+        .athlete-name { font-weight: 700; color: var(--primary); width: 25%; }
+        .workout-title { font-weight: 600; color: #1e293b; }
 
         /* Calendar */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #cbd5e1; border: 1px solid #cbd5e1; }
-        .calendar-header { background: #334155; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 0.8rem; }
-        .calendar-day { background: white; min-height: 130px; padding: 5px; position: relative; }
-        .cal-workout-block { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; padding: 4px; margin-bottom: 4px; font-size: 0.75rem; cursor: pointer; }
-        
+        .calendar-header { background: #334155; color: white; padding: 10px; text-align: center; font-weight: bold; }
+        .calendar-day { background: white; min-height: 120px; padding: 8px; }
+        .cal-workout-block { background: #eff6ff; border-left: 3px solid var(--primary); padding: 4px 8px; margin-bottom: 4px; font-size: 0.7rem; border-radius: 2px; }
+
         button.primary { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
         button.success { background: var(--green); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
         .share-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 8px; margin-top: 15px; word-break: break-all; font-family: monospace; font-size: 0.8rem; }
-        
-        table { width: 100%; border-collapse: collapse; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e2e8f0; }
     </style>
 </head>
 <body>
@@ -58,19 +59,19 @@
 
     <div id="page-workouts" class="hidden">
         <div class="card">
-            <h2 id="w-form-title">Assign Workout</h2>
+            <h2>Assign Workout</h2>
             <input type="date" id="w-date">
             <input type="text" id="w-title" placeholder="Workout Title">
             <textarea id="w-desc" rows="3" placeholder="Instructions..."></textarea>
             <label>Assign to Athletes:</label>
-            <div id="athlete-selector" style="max-height:150px; overflow-y:auto; border:1px solid #ccc; padding:10px; margin-bottom:10px;"></div>
+            <div id="athlete-selector" style="max-height:150px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:10px; margin-bottom:10px; background: #fff;"></div>
             <button class="primary" onclick="saveWorkout()">Save Workout</button>
         </div>
     </div>
 
     <div id="page-reports" class="hidden">
         <div class="card">
-            <h2>Generate Training Report</h2>
+            <h2>Training Reports</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div>
                     <label>Start Date</label>
@@ -81,29 +82,16 @@
                     <input type="date" id="rep-end">
                 </div>
             </div>
-            <button class="primary" onclick="generateReport()">Generate Spreadsheet View</button>
-            <button class="success" onclick="generateShareLink()">Create Shareable Link for Athletes</button>
+            <button class="primary" onclick="generateReport()">Generate Grouped View</button>
+            <button class="success" onclick="downloadCSV()">Export to Excel (CSV)</button>
+            <button class="success" style="background:#0891b2" onclick="generateShareLink()">Generate Athlete Share Link</button>
             
             <div id="share-display" class="hidden">
-                <p><strong>Copy this link to share with your team:</strong></p>
                 <div class="share-box" id="link-url"></div>
             </div>
         </div>
 
-        <div id="report-results" class="card hidden">
-            <h3>Training Log</h3>
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Athlete</th>
-                        <th>Workout</th>
-                        <th>Details</th>
-                    </tr>
-                </thead>
-                <tbody id="report-body"></tbody>
-            </table>
-        </div>
+        <div id="report-container"></div>
     </div>
 
     <div id="page-athletes" class="hidden">
@@ -114,7 +102,7 @@
             <button class="primary" onclick="saveAthlete()">Add to Roster</button>
         </div>
         <div class="card">
-            <table id="athleteTable">
+            <table style="width:100%; border-collapse: collapse;">
                 <tbody id="athleteBody"></tbody>
             </table>
         </div>
@@ -150,12 +138,12 @@
 
     function renderRoster() {
         const body = document.getElementById('athleteBody');
-        body.innerHTML = athletes.map((a, i) => `<tr><td>${a.name}</td><td>${a.email}</td></tr>`).join('');
+        body.innerHTML = athletes.map((a, i) => `<tr style="border-bottom: 1px solid #eee"><td><strong>${a.name}</strong></td><td>${a.email}</td></tr>`).join('');
     }
 
     function renderAthleteSelector() {
         const box = document.getElementById('athlete-selector');
-        box.innerHTML = athletes.map(a => `<label style="display:block"><input type="checkbox" class="a-check" value="${a.name}"> ${a.name}</label>`).join('');
+        box.innerHTML = athletes.map(a => `<label style="display:block; margin-bottom:5px;"><input type="checkbox" class="a-check" value="${a.name}"> ${a.name}</label>`).join('');
     }
 
     // --- WORKOUT LOGIC ---
@@ -173,64 +161,91 @@
         showPage('calendar');
     }
 
-    // --- REPORT LOGIC ---
+    // --- NEW GROUPED REPORT LOGIC ---
     function generateReport() {
         const start = document.getElementById('rep-start').value;
         const end = document.getElementById('rep-end').value;
         if(!start || !end) return alert("Select a date range");
 
-        const reportBody = document.getElementById('report-body');
-        reportBody.innerHTML = '';
+        const container = document.getElementById('report-container');
+        container.innerHTML = '';
         
-        // Sort workouts by date
-        const sorted = workouts.filter(w => w.date >= start && w.date <= end).sort((a,b) => a.date.localeCompare(b.date));
-
-        sorted.forEach(w => {
-            w.assigned.forEach(athleteName => {
-                const row = `<tr>
-                    <td>${w.date}</td>
-                    <td><strong>${athleteName}</strong></td>
-                    <td>${w.title}</td>
-                    <td><small>${w.desc}</small></td>
-                </tr>`;
-                reportBody.innerHTML += row;
-            });
+        // Group workouts by date
+        const filtered = workouts.filter(w => w.date >= start && w.date <= end).sort((a,b) => a.date.localeCompare(b.date));
+        const grouped = {};
+        
+        filtered.forEach(w => {
+            if (!grouped[w.date]) grouped[w.date] = [];
+            grouped[w.date].push(w);
         });
 
-        document.getElementById('report-results').classList.remove('hidden');
+        for (const date in grouped) {
+            let section = `
+                <div class="report-section">
+                    <div class="date-header">📅 ${new Date(date).toDateString()}</div>
+                    <table class="report-table">
+                        <thead><tr><th>Athlete</th><th>Workout</th><th>Instructions</th></tr></thead>
+                        <tbody>`;
+            
+            grouped[date].forEach(w => {
+                w.assigned.forEach(name => {
+                    section += `
+                        <tr>
+                            <td class="athlete-name">${name}</td>
+                            <td class="workout-title">${w.title}</td>
+                            <td><small>${w.desc}</small></td>
+                        </tr>`;
+                });
+            });
+
+            section += `</tbody></table></div>`;
+            container.innerHTML += section;
+        }
     }
 
-    // --- SHARE LOGIC ---
+    function downloadCSV() {
+        let csv = "Date,Athlete,Workout,Instructions\n";
+        workouts.forEach(w => {
+            w.assigned.forEach(name => {
+                csv += `"${w.date}","${name}","${w.title}","${w.desc.replace(/"/g, '""')}"\n`;
+            });
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'coach_report.csv');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
     function generateShareLink() {
         const start = document.getElementById('rep-start').value;
         const end = document.getElementById('rep-end').value;
-        if(!start || !end) return alert("Select a date range first");
-
-        // We encode the report data into the URL hash
         const filtered = workouts.filter(w => w.date >= start && w.date <= end);
-        const dataString = btoa(JSON.stringify(filtered)); // Base64 encode
+        const dataString = btoa(unescape(encodeURIComponent(JSON.stringify(filtered))));
         const shareUrl = window.location.origin + window.location.pathname + "#view=" + dataString;
-
         document.getElementById('link-url').innerText = shareUrl;
         document.getElementById('share-display').classList.remove('hidden');
     }
 
-    // Check if we are viewing a shared link
     window.onload = function() {
         if(window.location.hash.startsWith("#view=")) {
-            const data = JSON.parse(atob(window.location.hash.split("=")[1]));
-            document.body.innerHTML = `<div class="container">
-                <div class="card">
-                    <h1>Shared Training Schedule</h1>
-                    <table class="report-table">
-                        <thead><tr><th>Date</th><th>Athlete</th><th>Workout</th><th>Details</th></tr></thead>
-                        <tbody>
-                            ${data.flatMap(w => w.assigned.map(a => `<tr><td>${w.date}</td><td>${a}</td><td>${w.title}</td><td>${w.desc}</td></tr>`)).join('')}
-                        </tbody>
-                    </table>
-                    <button class="primary" onclick="window.location.hash=''; location.reload();">Back to Coach Portal</button>
-                </div>
-            </div>`;
+            const data = JSON.parse(decodeURIComponent(escape(atob(window.location.hash.split("=")[1]))));
+            document.body.innerHTML = `
+                <div class="container">
+                    <h1>Athlete Training Schedule</h1>
+                    ${data.map(w => `
+                        <div class="card">
+                            <h3 style="color:var(--primary)">${w.date} - ${w.title}</h3>
+                            <p>${w.desc}</p>
+                            <small>Assigned to: ${w.assigned.join(', ')}</small>
+                        </div>
+                    `).join('')}
+                    <button class="primary" onclick="window.location.hash=''; location.reload();">Close Schedule</button>
+                </div>`;
         }
     }
 
@@ -238,27 +253,16 @@
         const grid = document.getElementById('calendarGrid');
         const label = document.getElementById('monthLabel');
         const now = new Date();
-        const month = now.getMonth();
-        const year = now.getFullYear();
-
         label.innerText = now.toLocaleString('default', { month: 'long', year: 'numeric' });
         grid.innerHTML = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="calendar-header">${d}</div>`).join('');
-
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-        for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="calendar-day" style="background:#f1f5f9"></div>`;
-        
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="calendar-day" style="background:#f8fafc"></div>`;
         for(let d=1; d<=daysInMonth; d++) {
-            const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            let dayHtml = `<div class="calendar-day"><span class="day-num">${d}</span>`;
-            workouts.forEach((w, index) => {
-                if(w.date === dateStr) {
-                    dayHtml += `<div class="cal-workout-block"><strong>${w.title}</strong><br><small>${w.assigned.join(', ')}</small></div>`;
-                }
-            });
-            dayHtml += `</div>`;
-            grid.innerHTML += dayHtml;
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            let dayHtml = `<div class="calendar-day"><span style="font-weight:bold; color:#94a3b8">${d}</span>`;
+            workouts.forEach(w => { if(w.date === dateStr) dayHtml += `<div class="cal-workout-block"><strong>${w.title}</strong></div>`; });
+            grid.innerHTML += dayHtml + `</div>`;
         }
     }
 
