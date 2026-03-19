@@ -1,285 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>XC Team Manager</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Coach Portal</title>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --accent: #ef4444; --success: #22c55e; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; }
+        
+        /* Navigation */
+        nav { background: #1e293b; padding: 1rem; display: flex; justify-content: center; gap: 20px; position: sticky; top: 0; z-index: 100; }
+        nav button { background: none; color: white; border: 1px solid #334155; width: auto; padding: 8px 16px; font-size: 0.9rem; }
+        nav button.active { background: var(--primary); border-color: var(--primary); }
 
-<style>
-body { font-family: Arial; margin:0; background:#f4f6f8; }
-header { background:#1e3a8a; color:white; text-align:center; padding:1rem; }
+        .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+        .card { background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .hidden { display: none; }
 
-.tabs { display:flex; background:#ddd; }
-.tabs button { flex:1; padding:10px; border:none; cursor:pointer; }
-.tabs .active { background:white; font-weight:bold; }
+        /* Form Elements */
+        input, select, textarea { width: 100%; padding: 10px; margin: 8px 0 15px 0; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        .checkbox-group { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; }
+        .checkbox-item { display: flex; align-items: center; gap: 5px; font-size: 0.9rem; }
+        .checkbox-item input { width: auto; margin: 0; }
 
-.container { padding:20px; }
-.card { background:white; padding:15px; margin-bottom:15px; border-radius:8px; }
+        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        .undo-btn { background: #64748b; margin-top: 10px; }
+        .edit-btn { background: #f59e0b; width: auto; padding: 5px 10px; font-size: 0.8rem; }
+        .del-btn { background: var(--accent); width: auto; padding: 5px 10px; font-size: 0.8rem; }
 
-input, select, textarea { width:100%; margin:6px 0 12px; padding:8px; }
-button { padding:8px 12px; margin:4px 2px; cursor:pointer; }
+        /* Calendar Styles */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .calendar-day { border: 1px solid #e2e8f0; min-height: 80px; padding: 5px; background: white; border-radius: 4px; }
+        .calendar-header { font-weight: bold; background: #334155; color: white; padding: 5px; }
+        .today { border: 2px solid var(--primary); background: #eff6ff; }
 
-.hidden { display:none; }
-
-.calendar-day {
-  border:1px solid #ccc;
-  padding:10px;
-  margin:5px;
-  cursor:pointer;
-}
-
-.calendar-grid {
-  display:grid;
-  grid-template-columns: repeat(7, 1fr);
-}
-</style>
+        /* Athlete Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        .season-pill { font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; background: #e2e8f0; margin-right: 3px; }
+    </style>
 </head>
-
 <body>
 
-<header><h1>🏃 XC Team Manager</h1></header>
-
-<div class="tabs">
-<button onclick="showTab('roster')" class="active" id="rosterTab">Roster</button>
-<button onclick="showTab('workouts')" id="workoutsTab">Workouts</button>
-<button onclick="showTab('calendar')" id="calendarTab">Calendar</button>
-<button onclick="showTab('reports')" id="reportsTab">Reports</button>
-</div>
+<nav>
+    <button onclick="showPage('workouts')" id="btn-workouts" class="active">Workouts</button>
+    <button onclick="showPage('athletes')" id="btn-athletes">Athletes</button>
+    <button onclick="showPage('calendar')" id="btn-calendar">Calendar</button>
+</nav>
 
 <div class="container">
+    
+    <div id="page-workouts">
+        <div class="card">
+            <h2>New Workout</h2>
+            <input type="text" id="w-title" placeholder="Workout Title">
+            <textarea id="w-desc" placeholder="Details..."></textarea>
+            <button onclick="saveWorkout()">Post Workout</button>
+            <button id="undo-w-btn" class="undo-btn hidden" onclick="undoLastWorkout()">Undo Last Post</button>
+        </div>
+        <div id="workoutList"></div>
+    </div>
 
-<!-- ROSTER -->
-<div id="roster">
-<div class="card">
-<h2>Add Athlete</h2>
-<input id="name" placeholder="Name">
-<select id="grade">
-<option>6th</option><option>7th</option><option>8th</option>
-<option>9th</option><option>10th</option><option>11th</option><option>12th</option>
-</select>
-<input id="years" type="number" placeholder="Years Running">
-<input id="events" placeholder="Events">
-<select id="seasons" multiple>
-<option>Cross Country</option>
-<option>Winter Track</option>
-<option>Spring Track</option>
-</select>
-<button onclick="addAthlete()">Save Athlete</button>
-</div>
+    <div id="page-athletes" class="hidden">
+        <div class="card">
+            <h2 id="athlete-form-title">Add Athlete</h2>
+            <input type="hidden" id="athlete-index" value="-1">
+            <input type="text" id="a-name" placeholder="Full Name">
+            <input type="email" id="a-email" placeholder="Email Address">
+            <label>Seasons:</label>
+            <div class="checkbox-group">
+                <div class="checkbox-item"><input type="checkbox" id="s-xc"> XC</div>
+                <div class="checkbox-item"><input type="checkbox" id="s-winter"> Winter Track</div>
+                <div class="checkbox-item"><input type="checkbox" id="s-spring"> Spring Track</div>
+            </div>
+            <button onclick="saveAthlete()" id="save-athlete-btn">Add Athlete</button>
+            <button onclick="resetAthleteForm()" class="undo-btn" style="background:#94a3b8">Cancel</button>
+        </div>
+        <div class="card">
+            <h3>Roster</h3>
+            <table id="athleteTable">
+                <thead><tr><th>Name</th><th>Email</th><th>Seasons</th><th>Actions</th></tr></thead>
+                <tbody id="athleteBody"></tbody>
+            </table>
+        </div>
+    </div>
 
-<div class="card"><h2>Roster</h2><div id="athleteList"></div></div>
-</div>
-
-<!-- WORKOUTS -->
-<div id="workouts" class="hidden">
-<div class="card">
-<h2>Create Workout</h2>
-<input id="wTitle" placeholder="Workout Title">
-<input id="wDate" type="date">
-<textarea id="wDesc" placeholder="Workout"></textarea>
-<select id="assignTo"></select>
-<button onclick="addWorkout()">Save Workout</button>
-</div>
-
-<div class="card"><h2>All Workouts</h2><div id="workoutList"></div></div>
-</div>
-
-<!-- CALENDAR -->
-<div id="calendar" class="hidden">
-<div class="card">
-<h2>Calendar</h2>
-<input type="month" id="monthPicker" onchange="renderCalendar()">
-<div id="calendarGrid" class="calendar-grid"></div>
-</div>
-
-<div class="card">
-<h2>Selected Day</h2>
-<div id="dayDetails">Click a day</div>
-</div>
-</div>
-
-<!-- REPORTS -->
-<div id="reports" class="hidden">
-<div class="card">
-<h2>Generate Report</h2>
-
-<label>Date</label>
-<input type="date" id="reportDate">
-
-<label>Athlete</label>
-<select id="reportAthlete"></select>
-
-<button onclick="generateReport()">Generate</button>
-</div>
-
-<div class="card">
-<h2>Report Output</h2>
-<div id="reportOutput"></div>
-</div>
-</div>
+    <div id="page-calendar" class="hidden">
+        <div class="card">
+            <h2 id="monthLabel">Month</h2>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+    </div>
 
 </div>
 
 <script>
-let athletes = JSON.parse(localStorage.getItem("athletes")) || [];
-let workouts = JSON.parse(localStorage.getItem("workouts")) || [];
+    // State Management
+    let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
+    let athletes = JSON.parse(localStorage.getItem('athletes')) || [];
+    let lastDeletedWorkout = null;
 
-function save() {
-localStorage.setItem("athletes", JSON.stringify(athletes));
-localStorage.setItem("workouts", JSON.stringify(workouts));
-}
+    // Navigation
+    function showPage(pageId) {
+        ['workouts', 'athletes', 'calendar'].forEach(p => {
+            document.getElementById(`page-${p}`).classList.add('hidden');
+            document.getElementById(`btn-${p}`).classList.remove('active');
+        });
+        document.getElementById(`page-${pageId}`).classList.remove('hidden');
+        document.getElementById(`btn-${pageId}`).classList.add('active');
+        if(pageId === 'calendar') renderCalendar();
+    }
 
-function showTab(tab) {
-["roster","workouts","calendar","reports"].forEach(t=>{
-document.getElementById(t).classList.add("hidden");
-document.getElementById(t+"Tab").classList.remove("active");
-});
-document.getElementById(tab).classList.remove("hidden");
-document.getElementById(tab+"Tab").classList.add("active");
-}
+    // --- WORKOUT LOGIC ---
+    function saveWorkout() {
+        const title = document.getElementById('w-title').value;
+        const desc = document.getElementById('w-desc').value;
+        if(!title) return;
+        
+        workouts.unshift({ title, desc, date: new Date().toLocaleDateString() });
+        updateWorkouts();
+        document.getElementById('w-title').value = '';
+        document.getElementById('w-desc').value = '';
+        document.getElementById('undo-w-btn').classList.remove('hidden');
+    }
 
-/* ATHLETES */
-function addAthlete(){
-const name=document.getElementById("name").value;
-const grade=document.getElementById("grade").value;
-const years=document.getElementById("years").value;
-const events=document.getElementById("events").value;
-const seasons=[...document.getElementById("seasons").selectedOptions].map(o=>o.value);
+    function undoLastWorkout() {
+        workouts.shift();
+        updateWorkouts();
+        document.getElementById('undo-w-btn').classList.add('hidden');
+    }
 
-if(!name) return;
+    function updateWorkouts() {
+        localStorage.setItem('workouts', JSON.stringify(workouts));
+        const list = document.getElementById('workoutList');
+        list.innerHTML = workouts.map(w => `
+            <div class="card">
+                <h3>${w.title}</h3>
+                <p>${w.desc}</p>
+                <small>${w.date}</small>
+            </div>
+        `).join('');
+    }
 
-athletes.push({name,grade,years,events,seasons});
-save(); renderAthletes(); updateDropdowns();
-}
+    // --- ATHLETE LOGIC ---
+    function saveAthlete() {
+        const name = document.getElementById('a-name').value;
+        const email = document.getElementById('a-email').value;
+        const idx = parseInt(document.getElementById('athlete-index').value);
+        
+        const seasons = [];
+        if(document.getElementById('s-xc').checked) seasons.push('XC');
+        if(document.getElementById('s-winter').checked) seasons.push('Winter');
+        if(document.getElementById('s-spring').checked) seasons.push('Spring');
 
-function renderAthletes(){
-let html="";
-athletes.forEach((a,i)=>{
-html+=`<div class="card">
-<b>${a.name}</b><br>
-${a.grade} | ${a.events}<br>
-<button onclick="deleteAthlete(${i})">Delete</button>
-</div>`;
-});
-document.getElementById("athleteList").innerHTML=html;
-}
+        const athleteData = { name, email, seasons };
 
-function deleteAthlete(i){
-athletes.splice(i,1);
-save(); renderAthletes(); updateDropdowns();
-}
+        if(idx === -1) {
+            athletes.push(athleteData);
+        } else {
+            athletes[idx] = athleteData;
+        }
 
-/* WORKOUTS */
-function addWorkout(){
-const w={
-title:wTitle.value,
-date:wDate.value,
-desc:wDesc.value,
-assign:assignTo.value
-};
-if(!w.title||!w.date) return;
-workouts.push(w);
-save(); renderWorkouts();
-}
+        localStorage.setItem('athletes', JSON.stringify(athletes));
+        resetAthleteForm();
+        renderAthletes();
+    }
 
-function renderWorkouts(){
-let html="";
-workouts.forEach((w,i)=>{
-html+=`<div class="card">
-<b>${w.title}</b> (${w.date})<br>
-${w.desc}<br>
-Assigned: ${getAthleteName(w.assign)}
-<br><button onclick="editWorkout(${i})">Edit</button>
-</div>`;
-});
-workoutList.innerHTML=html;
-}
+    function editAthlete(index) {
+        const a = athletes[index];
+        document.getElementById('a-name').value = a.name;
+        document.getElementById('a-email').value = a.email;
+        document.getElementById('s-xc').checked = a.seasons.includes('XC');
+        document.getElementById('s-winter').checked = a.seasons.includes('Winter');
+        document.getElementById('s-spring').checked = a.seasons.includes('Spring');
+        document.getElementById('athlete-index').value = index;
+        document.getElementById('athlete-form-title').innerText = "Edit Athlete";
+        document.getElementById('save-athlete-btn').innerText = "Update Athlete";
+    }
 
-function editWorkout(i){
-const w=workouts[i];
-wTitle.value=w.title;
-wDate.value=w.date;
-wDesc.value=w.desc;
-assignTo.value=w.assign;
-workouts.splice(i,1);
-save(); renderWorkouts();
-}
+    function deleteAthlete(index) {
+        if(confirm("Delete this athlete?")) {
+            athletes.splice(index, 1);
+            localStorage.setItem('athletes', JSON.stringify(athletes));
+            renderAthletes();
+        }
+    }
 
-/* CALENDAR */
-function renderCalendar(){
-const month=document.getElementById("monthPicker").value;
-if(!month) return;
+    function resetAthleteForm() {
+        document.getElementById('athlete-index').value = "-1";
+        document.getElementById('a-name').value = "";
+        document.getElementById('a-email').value = "";
+        document.querySelectorAll('.checkbox-group input').forEach(c => c.checked = false);
+        document.getElementById('athlete-form-title').innerText = "Add Athlete";
+        document.getElementById('save-athlete-btn').innerText = "Add Athlete";
+    }
 
-const [y,m]=month.split("-");
-const days=new Date(y,m,0).getDate();
+    function renderAthletes() {
+        const body = document.getElementById('athleteBody');
+        body.innerHTML = athletes.map((a, i) => `
+            <tr>
+                <td>${a.name}</td>
+                <td>${a.email}</td>
+                <td>${a.seasons.map(s => `<span class="season-pill">${s}</span>`).join('')}</td>
+                <td>
+                    <button class="edit-btn" onclick="editAthlete(${i})">Edit</button>
+                    <button class="del-btn" onclick="deleteAthlete(${i})">X</button>
+                </td>
+            </tr>
+        `).join('');
+    }
 
-let html="";
-for(let d=1; d<=days; d++){
-let date=`${month}-${String(d).padStart(2,'0')}`;
-html+=`<div class="calendar-day" onclick="showDay('${date}')">${d}</div>`;
-}
-calendarGrid.innerHTML=html;
-}
+    // --- CALENDAR LOGIC ---
+    function renderCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        const label = document.getElementById('monthLabel');
+        const now = new Date();
+        const month = now.getMonth();
+        const year = now.getFullYear();
 
-function showDay(date){
-let dayWorkouts=workouts.filter(w=>w.date===date);
+        label.innerText = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+        grid.innerHTML = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="calendar-header">${d}</div>`).join('');
 
-let html=`<b>${date}</b><br>`;
-dayWorkouts.forEach((w,i)=>{
-html+=`
-<div class="card">
-<b>${w.title}</b><br>
-${w.desc}<br>
-Assigned: ${getAthleteName(w.assign)}
-<br><button onclick="editWorkout(${i})">Edit</button>
-</div>`;
-});
-dayDetails.innerHTML=html || "No workouts";
-}
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-/* REPORTS */
-function generateReport(){
-const date=reportDate.value;
-const athlete=reportAthlete.value;
+        for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="calendar-day" style="background:#f1f5f9"></div>`;
+        
+        for(let d=1; d<=daysInMonth; d++) {
+            const isToday = d === now.getDate() ? 'today' : '';
+            grid.innerHTML += `<div class="calendar-day ${isToday}">${d}</div>`;
+        }
+    }
 
-let filtered=workouts.filter(w=>{
-return (!date || w.date===date) &&
-(athlete==="all" || w.assign===athlete || w.assign==="all");
-});
-
-let html="";
-filtered.forEach(w=>{
-html+=`<div class="card">
-<b>${w.title}</b><br>
-${w.date}<br>
-${w.desc}<br>
-Assigned: ${getAthleteName(w.assign)}
-</div>`;
-});
-
-reportOutput.innerHTML=html || "No results";
-}
-
-/* HELPERS */
-function updateDropdowns(){
-assignTo.innerHTML='<option value="all">All Athletes</option>';
-reportAthlete.innerHTML='<option value="all">All Athletes</option>';
-
-athletes.forEach((a,i)=>{
-assignTo.innerHTML+=`<option value="${i}">${a.name}</option>`;
-reportAthlete.innerHTML+=`<option value="${i}">${a.name}</option>`;
-});
-}
-
-function getAthleteName(i){
-if(i==="all") return "All Athletes";
-return athletes[i]?.name || "Unknown";
-}
-
-/* INIT */
-renderAthletes();
-renderWorkouts();
-updateDropdowns();
+    // Initial Load
+    updateWorkouts();
+    renderAthletes();
 </script>
 
 </body>
