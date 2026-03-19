@@ -90,11 +90,19 @@
 
         <div id="view-roster" class="hidden space-y-6">
             <div class="card bg-slate-900 text-white">
-                <h3 class="label-xs text-slate-400 mb-4">Add New Athlete</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <h3 class="label-xs text-slate-400 mb-4">Athlete Management</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <input type="hidden" id="edit-runner-id">
                     <input type="text" id="run-name" placeholder="Name" class="p-3 bg-slate-800 rounded border-none text-white outline-none">
                     <input type="email" id="run-email" placeholder="Gmail" class="p-3 bg-slate-800 rounded border-none text-white outline-none">
-                    <button onclick="addRunner()" class="bg-blue-600 p-3 rounded font-black uppercase text-xs">Add to Roster</button>
+                    <select id="run-cat" class="p-3 bg-slate-800 rounded border-none text-white outline-none">
+                        <option value="Distance">Distance</option>
+                        <option value="Sprints">Sprints</option>
+                        <option value="Jumps/Throws">Jumps/Throws</option>
+                        <option value="Varsity">Varsity</option>
+                        <option value="JV">JV</option>
+                    </select>
+                    <button id="add-runner-btn" onclick="addRunner()" class="bg-blue-600 p-3 rounded font-black uppercase text-xs">Add Athlete</button>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="rosterList"></div>
@@ -226,7 +234,7 @@
 
         function processEmailQueue() {
             if(!emailQueue.length) {
-                if(emailTags.size > 0) startEmailBlast(); // First click initializes
+                if(emailTags.size > 0) startEmailBlast();
                 else return;
                 return;
             }
@@ -246,14 +254,35 @@
 
         // --- ROSTER FUNCTIONS ---
         function addRunner() {
+            const id = document.getElementById('edit-runner-id').value;
             const name = document.getElementById('run-name').value;
             const email = document.getElementById('run-email').value;
+            const category = document.getElementById('run-cat').value;
+            
             if(!name) return alert("Enter a name.");
-            runners.push({ id: Date.now().toString(), name, email });
+
+            if(id) {
+                const idx = runners.findIndex(r => r.id === id);
+                runners[idx] = { id, name, email, category };
+                document.getElementById('add-runner-btn').innerText = "Add Athlete";
+                document.getElementById('edit-runner-id').value = "";
+            } else {
+                runners.push({ id: Date.now().toString(), name, email, category });
+            }
+            
             localStorage.setItem('runners', JSON.stringify(runners));
-            document.getElementById('run-name').value = '';
-            document.getElementById('run-email').value = '';
+            ['run-name','run-email','edit-runner-id'].forEach(f => document.getElementById(f).value = '');
             renderAll();
+        }
+
+        function editRunner(id) {
+            const r = runners.find(item => item.id === id);
+            document.getElementById('edit-runner-id').value = r.id;
+            document.getElementById('run-name').value = r.name;
+            document.getElementById('run-email').value = r.email;
+            document.getElementById('run-cat').value = r.category;
+            document.getElementById('add-runner-btn').innerText = "Save Changes";
+            window.scrollTo(0,0);
         }
 
         function removeRunner(id) {
@@ -285,7 +314,6 @@
         }
 
         function renderAll() {
-            // Preview Aside
             const todayWork = workouts.filter(w => w.date === selDate);
             document.getElementById('aside-date').innerText = selDate;
             document.getElementById('sideRoster').innerHTML = todayWork.map(w => `
@@ -297,23 +325,24 @@
                     <div class="text-[11px] font-bold mt-1 text-slate-700">${w.main}</div>
                 </div>`).join('') || '<div class="text-slate-300 italic text-center py-10">No assignments</div>';
 
-            // Builder Checklist
             document.getElementById('checklist').innerHTML = runners.map(r => `
                 <label class="flex items-center gap-2 p-2 bg-white border rounded text-[10px] font-black cursor-pointer hover:bg-blue-50">
                     <input type="checkbox" class="run-check" value="${r.name}"> ${r.name}
                 </label>`).join('');
 
-            // Roster List
             document.getElementById('rosterList').innerHTML = runners.map(r => `
                 <div class="card flex justify-between items-center group">
                     <div>
                         <div class="font-black uppercase text-sm">${r.name}</div>
+                        <div class="text-xs text-blue-600 font-bold">${r.category}</div>
                         <div class="text-xs text-slate-400">${r.email || 'No email'}</div>
                     </div>
-                    <button onclick="removeRunner('${r.id}')" class="text-red-300 hover:text-red-600">🗑️</button>
+                    <div class="flex gap-2">
+                        <button onclick="editRunner('${r.id}')" class="text-slate-300 hover:text-blue-600">✏️</button>
+                        <button onclick="removeRunner('${r.id}')" class="text-slate-300 hover:text-red-600">🗑️</button>
+                    </div>
                 </div>`).join('');
 
-            // Ribbon
             const ribbon = document.getElementById('weekRibbon'); ribbon.innerHTML = '';
             let start = new Date(); start.setDate(start.getDate() - 3);
             for(let i=0; i<14; i++) {
