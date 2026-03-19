@@ -1,423 +1,389 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>XC Team Manager</title>
+# 🏃 Coaching Platform (TrainingPeaks-Style) — Full Starter Code
 
-<style>
-/* ===== GENERAL STYLING ===== */
-body {
-  font-family: Arial;
-  margin: 0;
-  background: #f4f6f8;
+This is a **complete starter project** for a TrainingPeaks-like coaching platform using:
+
+* Next.js (React)
+* Prisma (PostgreSQL ORM)
+* NextAuth (authentication)
+* FullCalendar (calendar UI)
+
+It includes:
+
+* Coach & Athlete roles
+* Workout creation
+* Workout assignment
+* Calendar view
+* Dashboard pages
+
+---
+
+# 📁 Project Structure
+
+```
+coaching-app/
+  prisma/
+    schema.prisma
+  pages/
+    _app.js
+    index.js
+    dashboard.js
+    api/
+      auth/[...nextauth].js
+      workouts.js
+  components/
+    WorkoutForm.js
+    WorkoutCalendar.js
+  lib/
+    prisma.js
+  package.json
+```
+
+---
+
+# ⚙️ 1. package.json
+
+```json
+{
+  "name": "coaching-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "next-auth": "latest",
+    "@prisma/client": "latest",
+    "prisma": "latest",
+    "fullcalendar": "latest",
+    "@fullcalendar/react": "latest",
+    "@fullcalendar/daygrid": "latest"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  }
+}
+```
+
+---
+
+# 🧠 2. Prisma Schema (Database)
+
+## prisma/schema.prisma
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
 }
 
-header {
-  background: #1e3a8a;
-  color: white;
-  text-align: center;
-  padding: 1rem;
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-/* ===== TAB NAVIGATION ===== */
-.tabs {
-  display: flex;
-  background: #ddd;
+model User {
+  id    String @id @default(cuid())
+  email String @unique
+  name  String?
+  role  String // "coach" or "athlete"
+
+  workouts Workout[]
 }
 
-.tabs button {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  cursor: pointer;
+model Workout {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime
+
+  athleteId String
+  coachId   String
+
+  completed Boolean @default(false)
+  notes     String?
+
+  athlete User @relation(fields: [athleteId], references: [id])
+  coach   User @relation(fields: [coachId], references: [id])
 }
+```
 
-.tabs .active {
-  background: white;
-  font-weight: bold;
+Run:
+
+```
+npx prisma migrate dev
+```
+
+---
+
+# 🔌 3. Prisma Client
+
+## lib/prisma.js
+
+```javascript
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = global;
+
+export const prisma = globalForPrisma.prisma || new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+```
+
+---
+
+# 🔐 4. Authentication (NextAuth)
+
+## pages/api/auth/[...nextauth].js
+
+```javascript
+import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { prisma } from "../../../lib/prisma";
+
+export default NextAuth({
+  providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: {},
+        password: {}
+      },
+      async authorize(credentials) {
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email }
+        });
+
+        if (user) return user;
+        return null;
+      }
+    })
+  ],
+  session: { strategy: "jwt" }
+});
+```
+
+---
+
+# 🌐 5. App Wrapper
+
+## pages/_app.js
+
+```javascript
+import { SessionProvider } from "next-auth/react";
+
+export default function App({ Component, pageProps }) {
+  return (
+    <SessionProvider session={pageProps.session}>
+      <Component {...pageProps} />
+    </SessionProvider>
+  );
 }
+```
 
-/* ===== LAYOUT ===== */
-.container {
-  padding: 20px;
-}
+---
 
-.card {
-  background: white;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 8px;
-}
+# 🏠 6. Home Page
 
-input, select, textarea {
-  width: 100%;
-  margin: 6px 0 12px;
-  padding: 8px;
-}
+## pages/index.js
 
-button {
-  padding: 8px 12px;
-  cursor: pointer;
-}
+```javascript
+import { signIn } from "next-auth/react";
 
-.hidden {
-  display: none;
-}
-
-/* ===== CALENDAR ===== */
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-}
-
-.calendar-day {
-  border: 1px solid #ccc;
-  padding: 6px;
-  margin: 4px;
-  min-height: 90px;
-  font-size: 12px;
-  overflow-y: auto;
-  cursor: pointer;
-}
-
-/* ===== REPORT TABLE ===== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-
-th {
-  background: #1e3a8a;
-  color: white;
-  padding: 6px;
-}
-
-td {
-  padding: 6px;
-  text-align: center;
-  border: 1px solid #ccc;
-}
-</style>
-</head>
-
-<body>
-
-<header>
-<h1>🏃 XC Team Manager</h1>
-</header>
-
-<!-- ===== TABS ===== -->
-<div class="tabs">
-<button onclick="showTab('roster')" class="active" id="rosterTab">Roster</button>
-<button onclick="showTab('workouts')" id="workoutsTab">Workouts</button>
-<button onclick="showTab('calendar')" id="calendarTab">Calendar</button>
-<button onclick="showTab('reports')" id="reportsTab">Reports</button>
-</div>
-
-<div class="container">
-
-<!-- ===== ROSTER ===== -->
-<div id="roster">
-<div class="card">
-<h2>Add Athlete</h2>
-
-<input id="name" placeholder="Name">
-
-<select id="grade">
-<option>6th</option><option>7th</option><option>8th</option>
-<option>9th</option><option>10th</option><option>11th</option><option>12th</option>
-</select>
-
-<input id="years" type="number" placeholder="Years Running">
-<input id="events" placeholder="Events">
-
-<select id="seasons" multiple>
-<option>Cross Country</option>
-<option>Winter Track</option>
-<option>Spring Track</option>
-</select>
-
-<button onclick="addAthlete()">Save Athlete</button>
-</div>
-
-<div class="card">
-<h2>Roster</h2>
-<div id="athleteList"></div>
-</div>
-</div>
-
-<!-- ===== WORKOUTS ===== -->
-<div id="workouts" class="hidden">
-<div class="card">
-<h2>Create Workout</h2>
-
-<input id="wTitle" placeholder="Workout Title">
-<input id="wDate" type="date">
-<textarea id="wDesc" placeholder="Workout details"></textarea>
-
-<select id="assignTo"></select>
-
-<button onclick="addWorkout()">Save Workout</button>
-</div>
-
-<div class="card">
-<h2>All Workouts</h2>
-<div id="workoutList"></div>
-</div>
-</div>
-
-<!-- ===== CALENDAR ===== -->
-<div id="calendar" class="hidden">
-<div class="card">
-<h2>Calendar</h2>
-<input type="month" id="monthPicker" onchange="renderCalendar()">
-<div id="calendarGrid" class="calendar-grid"></div>
-</div>
-
-<div class="card">
-<h2>Selected Day</h2>
-<div id="dayDetails">Click a day</div>
-</div>
-</div>
-
-<!-- ===== REPORTS ===== -->
-<div id="reports" class="hidden">
-<div class="card">
-<h2>Generate Report</h2>
-
-<label>Date (optional)</label>
-<input type="date" id="reportDate">
-
-<label>Athlete</label>
-<select id="reportAthlete"></select>
-
-<button onclick="generateReport()">Generate</button>
-</div>
-
-<div class="card">
-<h2>Report Output</h2>
-<div id="reportOutput"></div>
-</div>
-</div>
-
-</div>
-
-<script>
-
-/* ===== DATA STORAGE ===== */
-let athletes = JSON.parse(localStorage.getItem("athletes")) || [];
-let workouts = JSON.parse(localStorage.getItem("workouts")) || [];
-
-function save() {
-  localStorage.setItem("athletes", JSON.stringify(athletes));
-  localStorage.setItem("workouts", JSON.stringify(workouts));
-}
-
-/* ===== TAB SWITCHING ===== */
-function showTab(tab) {
-  ["roster","workouts","calendar","reports"].forEach(t=>{
-    document.getElementById(t).classList.add("hidden");
-    document.getElementById(t+"Tab").classList.remove("active");
-  });
-
-  document.getElementById(tab).classList.remove("hidden");
-  document.getElementById(tab+"Tab").classList.add("active");
-}
-
-/* ===== ATHLETES ===== */
-function addAthlete() {
-  const seasons = [...document.getElementById("seasons").selectedOptions].map(o=>o.value);
-
-  athletes.push({
-    name: name.value,
-    grade: grade.value,
-    years: years.value,
-    events: events.value,
-    seasons
-  });
-
-  save();
-  renderAthletes();
-  updateDropdowns();
-}
-
-function renderAthletes() {
-  athleteList.innerHTML = athletes.map((a,i)=>`
-    <div class="card">
-      <b>${a.name}</b><br>
-      ${a.grade} | ${a.events}<br>
-      <button onclick="deleteAthlete(${i})">Delete</button>
+export default function Home() {
+  return (
+    <div style={{ padding: 40 }}>
+      <h1>Coaching Platform</h1>
+      <button onClick={() => signIn()}>Login</button>
     </div>
-  `).join("");
+  );
 }
+```
 
-function deleteAthlete(i){
-  athletes.splice(i,1);
-  save();
-  renderAthletes();
-  updateDropdowns();
-}
+---
 
-/* ===== WORKOUTS ===== */
-function addWorkout(){
-  workouts.push({
-    title: wTitle.value,
-    date: wDate.value,
-    desc: wDesc.value,
-    assign: assignTo.value
-  });
+# 📊 7. Dashboard Page
 
-  save();
-  renderWorkouts();
-}
+## pages/dashboard.js
 
-function renderWorkouts(){
-  workoutList.innerHTML = workouts.map((w,i)=>`
-    <div class="card">
-      <b>${w.title}</b> (${w.date})<br>
-      ${w.desc}<br>
-      Assigned: ${getAthleteName(w.assign)}
-      <br><button onclick="editWorkout(${i})">Edit</button>
+```javascript
+import { useEffect, useState } from "react";
+import WorkoutForm from "../components/WorkoutForm";
+import WorkoutCalendar from "../components/WorkoutCalendar";
+
+export default function Dashboard() {
+  const [workouts, setWorkouts] = useState([]);
+
+  const fetchWorkouts = async () => {
+    const res = await fetch("/api/workouts");
+    const data = await res.json();
+    setWorkouts(data);
+  };
+
+  useEffect(() => {
+    fetchWorkouts();
+  }, []);
+
+  return (
+    <div style={{ padding: 40 }}>
+      <h1>Dashboard</h1>
+
+      <WorkoutForm onCreated={fetchWorkouts} />
+      <WorkoutCalendar workouts={workouts} />
     </div>
-  `).join("");
+  );
 }
+```
 
-function editWorkout(i){
-  const w = workouts[i];
+---
 
-  wTitle.value = w.title;
-  wDate.value = w.date;
-  wDesc.value = w.desc;
-  assignTo.value = w.assign;
+# 🧾 8. Workout Form
 
-  workouts.splice(i,1);
-  save();
-  renderWorkouts();
-}
+## components/WorkoutForm.js
 
-/* ===== CALENDAR WITH ATHLETES DISPLAYED ===== */
-function renderCalendar(){
+```javascript
+import { useState } from "react";
 
-  const month = monthPicker.value;
-  if(!month) return;
+export default function WorkoutForm({ onCreated }) {
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("");
 
-  const [y,m] = month.split("-");
-  const days = new Date(y,m,0).getDate();
-
-  let html="";
-
-  for(let d=1; d<=days; d++){
-
-    let date = `${month}-${String(d).padStart(2,'0')}`;
-
-    let dayWorkouts = workouts.filter(w=>w.date===date);
-
-    let content = `<b>${d}</b><br>`;
-
-    dayWorkouts.forEach(w=>{
-      content += `
-        <div>
-          <b>${w.title}</b><br>
-          ${getAthleteName(w.assign)}
-        </div>
-      `;
+  const createWorkout = async () => {
+    await fetch("/api/workouts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, date })
     });
 
-    html += `
-      <div class="calendar-day" onclick="showDay('${date}')">
-        ${content}
-      </div>
-    `;
-  }
+    setTitle("");
+    setDate("");
+    onCreated();
+  };
 
-  calendarGrid.innerHTML = html;
-}
-
-function showDay(date){
-  let dayWorkouts = workouts.filter(w=>w.date===date);
-
-  dayDetails.innerHTML = dayWorkouts.map((w,i)=>`
-    <div class="card">
-      <b>${w.title}</b><br>
-      ${w.desc}<br>
-      Assigned: ${getAthleteName(w.assign)}
-      <br><button onclick="editWorkout(${i})">Edit</button>
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <h2>Create Workout</h2>
+      <input
+        placeholder="Workout title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
+      <input
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+      />
+      <button onClick={createWorkout}>Add</button>
     </div>
-  `).join("") || "No workouts";
+  );
 }
+```
 
-/* ===== REPORT TABLE (DATES AS COLUMNS) ===== */
-function generateReport(){
+---
 
-  const selectedDate = reportDate.value;
-  const selectedAthlete = reportAthlete.value;
+# 📅 9. Calendar Component
 
-  let filtered = workouts.filter(w=>{
-    return (!selectedDate || w.date===selectedDate) &&
-           (selectedAthlete==="all" || w.assign===selectedAthlete || w.assign==="all");
-  });
+## components/WorkoutCalendar.js
 
-  if(filtered.length===0){
-    reportOutput.innerHTML="No results";
-    return;
+```javascript
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+
+export default function WorkoutCalendar({ workouts }) {
+  const events = workouts.map(w => ({
+    title: w.title,
+    date: w.date
+  }));
+
+  return (
+    <FullCalendar
+      plugins={[dayGridPlugin]}
+      initialView="dayGridMonth"
+      events={events}
+    />
+  );
+}
+```
+
+---
+
+# 📡 10. API Route
+
+## pages/api/workouts.js
+
+```javascript
+import { prisma } from "../../lib/prisma";
+
+export default async function handler(req, res) {
+  if (req.method === "GET") {
+    const workouts = await prisma.workout.findMany();
+    return res.json(workouts);
   }
 
-  let dates = [...new Set(filtered.map(w=>w.date))];
-
-  let athleteIndexes = selectedAthlete==="all"
-    ? athletes.map((_,i)=>i)
-    : [parseInt(selectedAthlete)];
-
-  let html = `<table><tr><th>Athlete</th>`;
-
-  dates.forEach(d=> html+=`<th>${d}</th>`);
-  html += `</tr>`;
-
-  athleteIndexes.forEach(i=>{
-    html += `<tr><td><b>${athletes[i]?.name}</b></td>`;
-
-    dates.forEach(d=>{
-      let cell = filtered
-        .filter(w=>w.date===d && (w.assign==i || w.assign==="all"))
-        .map(w=>w.title)
-        .join("<br>");
-
-      html += `<td>${cell || "-"}</td>`;
+  if (req.method === "POST") {
+    const workout = await prisma.workout.create({
+      data: {
+        title: req.body.title,
+        date: new Date(req.body.date),
+        athleteId: "TEMP_ATHLETE",
+        coachId: "TEMP_COACH"
+      }
     });
 
-    html += `</tr>`;
-  });
-
-  html += `</table>`;
-
-  reportOutput.innerHTML = html;
+    return res.json(workout);
+  }
 }
+```
 
-/* ===== HELPERS ===== */
-function updateDropdowns(){
-  assignTo.innerHTML='<option value="all">All Athletes</option>';
-  reportAthlete.innerHTML='<option value="all">All Athletes</option>';
+---
 
-  athletes.forEach((a,i)=>{
-    assignTo.innerHTML+=`<option value="${i}">${a.name}</option>`;
-    reportAthlete.innerHTML+=`<option value="${i}">${a.name}</option>`;
-  });
-}
+# 🚀 How to Run
 
-function getAthleteName(i){
-  return i==="all" ? "All Athletes" : athletes[i]?.name || "Unknown";
-}
+1. Install dependencies:
 
-/* ===== INITIAL LOAD ===== */
-renderAthletes();
-renderWorkouts();
-updateDropdowns();
+```
+npm install
+```
 
-</script>
+2. Set up environment variables:
 
-</body>
-</html>
+```
+DATABASE_URL=your_postgres_url
+NEXTAUTH_SECRET=your_secret
+```
+
+3. Run migrations:
+
+```
+npx prisma migrate dev
+```
+
+4. Start dev server:
+
+```
+npm run dev
+```
+
+---
+
+# 🧭 Next Steps (to reach TrainingPeaks-level)
+
+Add:
+
+* Athlete-specific calendars
+* Coach-athlete relationships
+* Drag-and-drop workouts
+* Workout detail pages
+* Notes/comments
+* Performance charts
+* Notifications
+
+---
+
+If you want, I can extend this into:
+
+* A **multi-user production-ready SaaS version**
+* A **drag-and-drop TrainingPeaks-style calendar UI**
+* Or add **athlete/coach role separation + login flow**
+
 
      
