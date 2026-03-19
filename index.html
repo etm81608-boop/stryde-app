@@ -1,389 +1,140 @@
-# 🏃 Coaching Platform (TrainingPeaks-Style) — Full Starter Code
-
-This is a **complete starter project** for a TrainingPeaks-like coaching platform using:
-
-* Next.js (React)
-* Prisma (PostgreSQL ORM)
-* NextAuth (authentication)
-* FullCalendar (calendar UI)
-
-It includes:
-
-* Coach & Athlete roles
-* Workout creation
-* Workout assignment
-* Calendar view
-* Dashboard pages
-
----
-
-# 📁 Project Structure
-
-```
-coaching-app/
-  prisma/
-    schema.prisma
-  pages/
-    _app.js
-    index.js
-    dashboard.js
-    api/
-      auth/[...nextauth].js
-      workouts.js
-  components/
-    WorkoutForm.js
-    WorkoutCalendar.js
-  lib/
-    prisma.js
-  package.json
-```
-
----
-
-# ⚙️ 1. package.json
-
-```json
-{
-  "name": "coaching-app",
-  "version": "1.0.0",
-  "dependencies": {
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "next-auth": "latest",
-    "@prisma/client": "latest",
-    "prisma": "latest",
-    "fullcalendar": "latest",
-    "@fullcalendar/react": "latest",
-    "@fullcalendar/daygrid": "latest"
-  },
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  }
-}
-```
-
----
-
-# 🧠 2. Prisma Schema (Database)
-
-## prisma/schema.prisma
-
-```prisma
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model User {
-  id    String @id @default(cuid())
-  email String @unique
-  name  String?
-  role  String // "coach" or "athlete"
-
-  workouts Workout[]
-}
-
-model Workout {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  date        DateTime
-
-  athleteId String
-  coachId   String
-
-  completed Boolean @default(false)
-  notes     String?
-
-  athlete User @relation(fields: [athleteId], references: [id])
-  coach   User @relation(fields: [coachId], references: [id])
-}
-```
-
-Run:
-
-```
-npx prisma migrate dev
-```
-
----
-
-# 🔌 3. Prisma Client
-
-## lib/prisma.js
-
-```javascript
-import { PrismaClient } from "@prisma/client";
-
-const globalForPrisma = global;
-
-export const prisma = globalForPrisma.prisma || new PrismaClient();
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
-```
-
----
-
-# 🔐 4. Authentication (NextAuth)
-
-## pages/api/auth/[...nextauth].js
-
-```javascript
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "../../../lib/prisma";
-
-export default NextAuth({
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: {},
-        password: {}
-      },
-      async authorize(credentials) {
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
-
-        if (user) return user;
-        return null;
-      }
-    })
-  ],
-  session: { strategy: "jwt" }
-});
-```
-
----
-
-# 🌐 5. App Wrapper
-
-## pages/_app.js
-
-```javascript
-import { SessionProvider } from "next-auth/react";
-
-export default function App({ Component, pageProps }) {
-  return (
-    <SessionProvider session={pageProps.session}>
-      <Component {...pageProps} />
-    </SessionProvider>
-  );
-}
-```
-
----
-
-# 🏠 6. Home Page
-
-## pages/index.js
-
-```javascript
-import { signIn } from "next-auth/react";
-
-export default function Home() {
-  return (
-    <div style={{ padding: 40 }}>
-      <h1>Coaching Platform</h1>
-      <button onClick={() => signIn()}>Login</button>
-    </div>
-  );
-}
-```
-
----
-
-# 📊 7. Dashboard Page
-
-## pages/dashboard.js
-
-```javascript
-import { useEffect, useState } from "react";
-import WorkoutForm from "../components/WorkoutForm";
-import WorkoutCalendar from "../components/WorkoutCalendar";
-
-export default function Dashboard() {
-  const [workouts, setWorkouts] = useState([]);
-
-  const fetchWorkouts = async () => {
-    const res = await fetch("/api/workouts");
-    const data = await res.json();
-    setWorkouts(data);
-  };
-
-  useEffect(() => {
-    fetchWorkouts();
-  }, []);
-
-  return (
-    <div style={{ padding: 40 }}>
-      <h1>Dashboard</h1>
-
-      <WorkoutForm onCreated={fetchWorkouts} />
-      <WorkoutCalendar workouts={workouts} />
-    </div>
-  );
-}
-```
-
----
-
-# 🧾 8. Workout Form
-
-## components/WorkoutForm.js
-
-```javascript
-import { useState } from "react";
-
-export default function WorkoutForm({ onCreated }) {
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-
-  const createWorkout = async () => {
-    await fetch("/api/workouts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, date })
-    });
-
-    setTitle("");
-    setDate("");
-    onCreated();
-  };
-
-  return (
-    <div style={{ marginBottom: 20 }}>
-      <h2>Create Workout</h2>
-      <input
-        placeholder="Workout title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-      />
-      <button onClick={createWorkout}>Add</button>
-    </div>
-  );
-}
-```
-
----
-
-# 📅 9. Calendar Component
-
-## components/WorkoutCalendar.js
-
-```javascript
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-
-export default function WorkoutCalendar({ workouts }) {
-  const events = workouts.map(w => ({
-    title: w.title,
-    date: w.date
-  }));
-
-  return (
-    <FullCalendar
-      plugins={[dayGridPlugin]}
-      initialView="dayGridMonth"
-      events={events}
-    />
-  );
-}
-```
-
----
-
-# 📡 10. API Route
-
-## pages/api/workouts.js
-
-```javascript
-import { prisma } from "../../lib/prisma";
-
-export default async function handler(req, res) {
-  if (req.method === "GET") {
-    const workouts = await prisma.workout.findMany();
-    return res.json(workouts);
-  }
-
-  if (req.method === "POST") {
-    const workout = await prisma.workout.create({
-      data: {
-        title: req.body.title,
-        date: new Date(req.body.date),
-        athleteId: "TEMP_ATHLETE",
-        coachId: "TEMP_COACH"
-      }
-    });
-
-    return res.json(workout);
-  }
-}
-```
-
----
-
-# 🚀 How to Run
-
-1. Install dependencies:
-
-```
-npm install
-```
-
-2. Set up environment variables:
-
-```
-DATABASE_URL=your_postgres_url
-NEXTAUTH_SECRET=your_secret
-```
-
-3. Run migrations:
-
-```
-npx prisma migrate dev
-```
-
-4. Start dev server:
-
-```
-npm run dev
-```
-
----
-
-# 🧭 Next Steps (to reach TrainingPeaks-level)
-
-Add:
-
-* Athlete-specific calendars
-* Coach-athlete relationships
-* Drag-and-drop workouts
-* Workout detail pages
-* Notes/comments
-* Performance charts
-* Notifications
-
----
-
-If you want, I can extend this into:
-
-* A **multi-user production-ready SaaS version**
-* A **drag-and-drop TrainingPeaks-style calendar UI**
-* Or add **athlete/coach role separation + login flow**
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RunnerFlow Master Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .status-green { border-left: 8px solid #22c55e; }
+        .status-yellow { border-left: 8px solid #eab308; }
+        .status-red { border-left: 8px solid #ef4444; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 p-6">
+
+    <header class="max-w-6xl mx-auto mb-10">
+        <h1 class="text-3xl font-bold text-blue-400">RunnerFlow Mission Control</h1>
+        <div id="alerts-bar" class="mt-4 flex gap-4">
+            <div class="bg-gray-800 p-4 rounded-lg flex-1 border border-gray-700">
+                <p class="text-sm text-gray-400 uppercase">Injury Alerts</p>
+                <p id="injury-count" class="text-2xl font-bold text-red-500">0</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg flex-1 border border-gray-700">
+                <p class="text-sm text-gray-400 uppercase">Active Roster</p>
+                <p id="roster-count" class="text-2xl font-bold text-blue-400">0</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <section class="bg-gray-800 p-6 rounded-xl border border-gray-700">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Athlete Roster</h2>
+            <div id="runner-list" class="space-y-4 mb-6"></div>
+            
+            <h3 class="text-sm font-bold text-gray-400 mb-2">ADD NEW RUNNER</h3>
+            <div class="space-y-2">
+                <input id="new-name" type="text" placeholder="Name" class="w-full bg-gray-700 p-2 rounded text-sm">
+                <input id="new-vdot" type="number" placeholder="VDOT (e.g. 50)" class="w-full bg-gray-700 p-2 rounded text-sm">
+                <button onclick="addRunner()" class="w-full bg-blue-600 hover:bg-blue-500 p-2 rounded font-bold transition">Add Athlete</button>
+            </div>
+        </section>
+
+        <section class="bg-gray-800 p-6 rounded-xl border border-gray-700">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Workout Library</h2>
+            <div class="space-y-2 mb-6">
+                <div class="p-3 bg-gray-700 rounded cursor-pointer hover:bg-gray-600" onclick="selectWorkout('Intervals', 0.98)">
+                    <p class="font-bold">VO2 Max Intervals</p>
+                    <p class="text-xs text-gray-400">Intensity: 98% VDOT</p>
+                </div>
+                <div class="p-3 bg-gray-700 rounded cursor-pointer hover:bg-gray-600" onclick="selectWorkout('Threshold', 0.88)">
+                    <p class="font-bold">Threshold Tempo</p>
+                    <p class="text-xs text-gray-400">Intensity: 88% VDOT</p>
+                </div>
+                <div class="p-3 bg-gray-700 rounded cursor-pointer hover:bg-gray-600" onclick="selectWorkout('Easy', 0.70)">
+                    <p class="font-bold">Recovery/Easy</p>
+                    <p class="text-xs text-gray-400">Intensity: 70% VDOT</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-gray-800 p-6 rounded-xl border border-gray-700">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Pace Calculator</h2>
+            <div id="calc-display" class="text-center p-8 bg-gray-900 rounded-lg border-2 border-dashed border-gray-700">
+                <p class="text-gray-500 italic">Select an Athlete and a Workout to calculate target pace.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // CORE STATE
+        let runners = JSON.parse(localStorage.getItem('runners')) || [];
+        let selectedRunner = null;
+
+        // VDOT PACE LOGIC
+        function getPace(vdot, intensity) {
+            const vo2 = vdot * intensity;
+            const a = 0.000104, b = 0.182258, c = -4.60 - vo2;
+            const v = (-b + Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
+            const secPerMile = 1609.34 / v;
+            const min = Math.floor(secPerMile / 60);
+            const sec = Math.round(secPerMile % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}/mi`;
+        }
+
+        function addRunner() {
+            const name = document.getElementById('new-name').value;
+            const vdot = document.getElementById('new-vdot').value;
+            if(!name || !vdot) return;
+            runners.push({ name, vdot: parseFloat(vdot), status: 'green', shoeMiles: 0 });
+            saveAndRender();
+        }
+
+        function selectWorkout(type, factor) {
+            if(!selectedRunner) {
+                alert("Select a runner first!");
+                return;
+            }
+            const pace = getPace(selectedRunner.vdot, factor);
+            document.getElementById('calc-display').innerHTML = `
+                <h3 class="text-blue-400 font-bold">${selectedRunner.name}'s ${type}</h3>
+                <p class="text-5xl font-black my-4">${pace}</p>
+                <p class="text-gray-400 text-sm">Target Pace at ${Math.round(factor*100)}% Intensity</p>
+            `;
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('runners', JSON.stringify(runners));
+            render();
+        }
+
+        function render() {
+            const list = document.getElementById('runner-list');
+            list.innerHTML = '';
+            let redAlerts = 0;
+            
+            runners.forEach((r, index) => {
+                if(r.status === 'red') redAlerts++;
+                const card = document.createElement('div');
+                card.className = `p-4 bg-gray-700 rounded cursor-pointer hover:border-blue-500 border border-transparent status-${r.status}`;
+                card.onclick = () => {
+                    selectedRunner = r;
+                    document.querySelectorAll('#runner-list div').forEach(d => d.classList.remove('ring-2', 'ring-blue-500'));
+                    card.classList.add('ring-2', 'ring-blue-500');
+                };
+                card.innerHTML = `<p class="font-bold">${r.name}</p><p class="text-xs text-gray-400 text-sm">VDOT: ${r.vdot}</p>`;
+                list.appendChild(card);
+            });
+
+            document.getElementById('roster-count').innerText = runners.length;
+            document.getElementById('injury-count').innerText = redAlerts;
+        }
+
+        render();
+    </script>
+</body>
+</html>
 
      
