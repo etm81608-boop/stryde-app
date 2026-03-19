@@ -1,159 +1,287 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coach's Running Portal</title>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #1e293b;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XC Team Manager</title>
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-        }
+<style>
+body { font-family: Arial; margin:0; background:#f4f6f8; }
+header { background:#1e3a8a; color:white; text-align:center; padding:1rem; }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
+.tabs { display:flex; background:#ddd; }
+.tabs button { flex:1; padding:10px; border:none; cursor:pointer; }
+.tabs .active { background:white; font-weight:bold; }
 
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+.container { padding:20px; }
+.card { background:white; padding:15px; margin-bottom:15px; border-radius:8px; }
 
-        .card {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
+input, select, textarea { width:100%; margin:6px 0 12px; padding:8px; }
+button { padding:8px 12px; margin:4px 2px; cursor:pointer; }
 
-        h2 { margin-top: 0; color: var(--primary); }
+.hidden { display:none; }
 
-        .form-group { margin-bottom: 15px; }
+.calendar-day {
+  border:1px solid #ccc;
+  padding:10px;
+  margin:5px;
+  cursor:pointer;
+}
 
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-
-        input, textarea, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-
-        button {
-            background-color: var(--primary);
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-        }
-
-        button:hover { opacity: 0.9; }
-
-        .workout-item {
-            border-left: 5px solid var(--primary);
-            padding: 15px;
-            margin-bottom: 15px;
-            background: #fff;
-            border-radius: 0 8px 8px 0;
-            position: relative;
-        }
-
-        .workout-date { font-size: 0.85rem; color: #64748b; }
-        .workout-type { 
-            display: inline-block;
-            background: #dbeafe;
-            color: #1e40af;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-    </style>
+.calendar-grid {
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+</style>
 </head>
+
 <body>
 
+<header><h1>🏃 XC Team Manager</h1></header>
+
+<div class="tabs">
+<button onclick="showTab('roster')" class="active" id="rosterTab">Roster</button>
+<button onclick="showTab('workouts')" id="workoutsTab">Workouts</button>
+<button onclick="showTab('calendar')" id="calendarTab">Calendar</button>
+<button onclick="showTab('reports')" id="reportsTab">Reports</button>
+</div>
+
 <div class="container">
-    <header>
-        <h1>🏃‍♂️ Athlete Training Portal</h1>
-        <p>Create and share workouts with your team.</p>
-    </header>
 
-    <div class="card">
-        <h2>Create New Workout</h2>
-        <div class="form-group">
-            <label>Workout Title</label>
-            <input type="text" id="title" placeholder="e.g. 5x1000m Intervals">
-        </div>
-        <div class="form-group">
-            <label>Type</label>
-            <select id="type">
-                <option value="Intervals">Intervals</option>
-                <option value="Long Run">Long Run</option>
-                <option value="Tempo">Tempo</option>
-                <option value="Recovery">Recovery</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Instructions</label>
-            <textarea id="desc" rows="3" placeholder="Warm up 2 miles, then..."></textarea>
-        </div>
-        <button onclick="addWorkout()">Post to Dashboard</button>
-    </div>
+<!-- ROSTER -->
+<div id="roster">
+<div class="card">
+<h2>Add Athlete</h2>
+<input id="name" placeholder="Name">
+<select id="grade">
+<option>6th</option><option>7th</option><option>8th</option>
+<option>9th</option><option>10th</option><option>11th</option><option>12th</option>
+</select>
+<input id="years" type="number" placeholder="Years Running">
+<input id="events" placeholder="Events">
+<select id="seasons" multiple>
+<option>Cross Country</option>
+<option>Winter Track</option>
+<option>Spring Track</option>
+</select>
+<button onclick="addAthlete()">Save Athlete</button>
+</div>
 
-    <div class="card">
-        <h2>Active Workout Feed</h2>
-        <div id="workoutFeed">
-            </div>
-    </div>
+<div class="card"><h2>Roster</h2><div id="athleteList"></div></div>
+</div>
+
+<!-- WORKOUTS -->
+<div id="workouts" class="hidden">
+<div class="card">
+<h2>Create Workout</h2>
+<input id="wTitle" placeholder="Workout Title">
+<input id="wDate" type="date">
+<textarea id="wDesc" placeholder="Workout"></textarea>
+<select id="assignTo"></select>
+<button onclick="addWorkout()">Save Workout</button>
+</div>
+
+<div class="card"><h2>All Workouts</h2><div id="workoutList"></div></div>
+</div>
+
+<!-- CALENDAR -->
+<div id="calendar" class="hidden">
+<div class="card">
+<h2>Calendar</h2>
+<input type="month" id="monthPicker" onchange="renderCalendar()">
+<div id="calendarGrid" class="calendar-grid"></div>
+</div>
+
+<div class="card">
+<h2>Selected Day</h2>
+<div id="dayDetails">Click a day</div>
+</div>
+</div>
+
+<!-- REPORTS -->
+<div id="reports" class="hidden">
+<div class="card">
+<h2>Generate Report</h2>
+
+<label>Date</label>
+<input type="date" id="reportDate">
+
+<label>Athlete</label>
+<select id="reportAthlete"></select>
+
+<button onclick="generateReport()">Generate</button>
+</div>
+
+<div class="card">
+<h2>Report Output</h2>
+<div id="reportOutput"></div>
+</div>
+</div>
+
 </div>
 
 <script>
-    function addWorkout() {
-        const title = document.getElementById('title').value;
-        const type = document.getElementById('type').value;
-        const desc = document.getElementById('desc').value;
-        const date = new Date().toLocaleDateString();
+let athletes = JSON.parse(localStorage.getItem("athletes")) || [];
+let workouts = JSON.parse(localStorage.getItem("workouts")) || [];
 
-        if(!title || !desc) {
-            alert("Please fill out all fields!");
-            return;
-        }
+function save() {
+localStorage.setItem("athletes", JSON.stringify(athletes));
+localStorage.setItem("workouts", JSON.stringify(workouts));
+}
 
-        const feed = document.getElementById('workoutFeed');
-        
-        const workoutHTML = `
-            <div class="workout-item">
-                <span class="workout-type">${type}</span>
-                <span class="workout-date">${date}</span>
-                <h3>${title}</h3>
-                <p>${desc}</p>
-            </div>
-        `;
+function showTab(tab) {
+["roster","workouts","calendar","reports"].forEach(t=>{
+document.getElementById(t).classList.add("hidden");
+document.getElementById(t+"Tab").classList.remove("active");
+});
+document.getElementById(tab).classList.remove("hidden");
+document.getElementById(tab+"Tab").classList.add("active");
+}
 
-        feed.insertAdjacentHTML('afterbegin', workoutHTML);
+/* ATHLETES */
+function addAthlete(){
+const name=document.getElementById("name").value;
+const grade=document.getElementById("grade").value;
+const years=document.getElementById("years").value;
+const events=document.getElementById("events").value;
+const seasons=[...document.getElementById("seasons").selectedOptions].map(o=>o.value);
 
-        // Clear inputs
-        document.getElementById('title').value = '';
-        document.getElementById('desc').value = '';
-    }
+if(!name) return;
+
+athletes.push({name,grade,years,events,seasons});
+save(); renderAthletes(); updateDropdowns();
+}
+
+function renderAthletes(){
+let html="";
+athletes.forEach((a,i)=>{
+html+=`<div class="card">
+<b>${a.name}</b><br>
+${a.grade} | ${a.events}<br>
+<button onclick="deleteAthlete(${i})">Delete</button>
+</div>`;
+});
+document.getElementById("athleteList").innerHTML=html;
+}
+
+function deleteAthlete(i){
+athletes.splice(i,1);
+save(); renderAthletes(); updateDropdowns();
+}
+
+/* WORKOUTS */
+function addWorkout(){
+const w={
+title:wTitle.value,
+date:wDate.value,
+desc:wDesc.value,
+assign:assignTo.value
+};
+if(!w.title||!w.date) return;
+workouts.push(w);
+save(); renderWorkouts();
+}
+
+function renderWorkouts(){
+let html="";
+workouts.forEach((w,i)=>{
+html+=`<div class="card">
+<b>${w.title}</b> (${w.date})<br>
+${w.desc}<br>
+Assigned: ${getAthleteName(w.assign)}
+<br><button onclick="editWorkout(${i})">Edit</button>
+</div>`;
+});
+workoutList.innerHTML=html;
+}
+
+function editWorkout(i){
+const w=workouts[i];
+wTitle.value=w.title;
+wDate.value=w.date;
+wDesc.value=w.desc;
+assignTo.value=w.assign;
+workouts.splice(i,1);
+save(); renderWorkouts();
+}
+
+/* CALENDAR */
+function renderCalendar(){
+const month=document.getElementById("monthPicker").value;
+if(!month) return;
+
+const [y,m]=month.split("-");
+const days=new Date(y,m,0).getDate();
+
+let html="";
+for(let d=1; d<=days; d++){
+let date=`${month}-${String(d).padStart(2,'0')}`;
+html+=`<div class="calendar-day" onclick="showDay('${date}')">${d}</div>`;
+}
+calendarGrid.innerHTML=html;
+}
+
+function showDay(date){
+let dayWorkouts=workouts.filter(w=>w.date===date);
+
+let html=`<b>${date}</b><br>`;
+dayWorkouts.forEach((w,i)=>{
+html+=`
+<div class="card">
+<b>${w.title}</b><br>
+${w.desc}<br>
+Assigned: ${getAthleteName(w.assign)}
+<br><button onclick="editWorkout(${i})">Edit</button>
+</div>`;
+});
+dayDetails.innerHTML=html || "No workouts";
+}
+
+/* REPORTS */
+function generateReport(){
+const date=reportDate.value;
+const athlete=reportAthlete.value;
+
+let filtered=workouts.filter(w=>{
+return (!date || w.date===date) &&
+(athlete==="all" || w.assign===athlete || w.assign==="all");
+});
+
+let html="";
+filtered.forEach(w=>{
+html+=`<div class="card">
+<b>${w.title}</b><br>
+${w.date}<br>
+${w.desc}<br>
+Assigned: ${getAthleteName(w.assign)}
+</div>`;
+});
+
+reportOutput.innerHTML=html || "No results";
+}
+
+/* HELPERS */
+function updateDropdowns(){
+assignTo.innerHTML='<option value="all">All Athletes</option>';
+reportAthlete.innerHTML='<option value="all">All Athletes</option>';
+
+athletes.forEach((a,i)=>{
+assignTo.innerHTML+=`<option value="${i}">${a.name}</option>`;
+reportAthlete.innerHTML+=`<option value="${i}">${a.name}</option>`;
+});
+}
+
+function getAthleteName(i){
+if(i==="all") return "All Athletes";
+return athletes[i]?.name || "Unknown";
+}
+
+/* INIT */
+renderAthletes();
+renderWorkouts();
+updateDropdowns();
 </script>
 
 </body>
 </html>
-              
+     
