@@ -3,211 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elite Coach Portal</title>
+    <title>Pro Coach - Unified Portal</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --accent: #ef4444; --success: #22c55e; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; }
+        :root { --primary: #2563eb; --bg: #f1f5f9; --card: #ffffff; --text: #0f172a; --accent: #ef4444; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
         
-        /* Navigation */
-        nav { background: #1e293b; padding: 1rem; display: flex; justify-content: center; gap: 20px; position: sticky; top: 0; z-index: 100; }
-        nav button { background: none; color: white; border: 1px solid #334155; width: auto; padding: 8px 16px; font-size: 0.9rem; }
-        nav button.active { background: var(--primary); border-color: var(--primary); }
+        nav { background: #1e293b; padding: 1rem; display: flex; justify-content: center; gap: 10px; position: sticky; top: 0; z-index: 1000; }
+        nav button { background: #334155; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        nav button.active { background: var(--primary); }
 
-        .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
-        .card { background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
+        .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .hidden { display: none; }
 
-        /* Form Elements */
-        input, select, textarea { width: 100%; padding: 10px; margin: 8px 0 15px 0; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
-        .checkbox-group { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; }
-        .checkbox-item { display: flex; align-items: center; gap: 5px; font-size: 0.9rem; }
-        .checkbox-item input { width: auto; margin: 0; }
+        input, textarea, select { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        
+        /* Athlete Selector */
+        .selector-box { max-height: 150px; overflow-y: auto; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
+        .selector-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; margin-bottom: 5px; }
+        .selector-item input { width: auto; margin: 0; }
 
-        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
-        .undo-btn { background: #64748b; margin-top: 10px; }
-        .edit-btn { background: #f59e0b; width: auto; padding: 5px 10px; font-size: 0.8rem; }
-        .del-btn { background: var(--accent); width: auto; padding: 5px 10px; font-size: 0.8rem; }
+        /* Calendar */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #e2e8f0; border: 1px solid #e2e8f0; }
+        .calendar-header { background: #334155; color: white; padding: 10px; text-align: center; font-weight: bold; }
+        .calendar-day { background: white; min-height: 120px; padding: 5px; position: relative; }
+        .day-num { font-weight: bold; color: #64748b; margin-bottom: 5px; display: block; }
+        .cal-workout-link { background: #dbeafe; color: #1e40af; font-size: 0.7rem; padding: 2px 4px; border-radius: 3px; margin-bottom: 2px; cursor: pointer; display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; border: 1px solid #bfdbfe; }
+        .today { background: #f8fafc; box-shadow: inset 0 0 0 2px var(--primary); }
 
-        /* Calendar Styles */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
-        .calendar-day { border: 1px solid #e2e8f0; min-height: 80px; padding: 5px; background: white; border-radius: 4px; }
-        .calendar-header { font-weight: bold; background: #334155; color: white; padding: 5px; }
-        .today { border: 2px solid var(--primary); background: #eff6ff; }
-
-        /* Athlete Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e2e8f0; }
-        .season-pill { font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; background: #e2e8f0; margin-right: 3px; }
+        button.primary { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        button.secondary { background: #64748b; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 5px;}
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e2e8f0; }
+        .season-tag { font-size: 0.7rem; background: #e2e8f0; padding: 2px 5px; border-radius: 4px; margin-right: 2px; }
     </style>
 </head>
 <body>
 
 <nav>
-    <button onclick="showPage('workouts')" id="btn-workouts" class="active">Workouts</button>
-    <button onclick="showPage('athletes')" id="btn-athletes">Athletes</button>
+    <button onclick="showPage('workouts')" id="btn-workouts" class="active">Assign Workouts</button>
     <button onclick="showPage('calendar')" id="btn-calendar">Calendar</button>
+    <button onclick="showPage('athletes')" id="btn-athletes">Roster</button>
 </nav>
 
 <div class="container">
     
     <div id="page-workouts">
         <div class="card">
-            <h2>New Workout</h2>
-            <input type="text" id="w-title" placeholder="Workout Title">
-            <textarea id="w-desc" placeholder="Details..."></textarea>
-            <button onclick="saveWorkout()">Post Workout</button>
-            <button id="undo-w-btn" class="undo-btn hidden" onclick="undoLastWorkout()">Undo Last Post</button>
+            <h2 id="w-form-title">Assign New Workout</h2>
+            <input type="hidden" id="w-edit-id" value="-1">
+            
+            <label>Workout Date</label>
+            <input type="date" id="w-date">
+
+            <label>Workout Title</label>
+            <input type="text" id="w-title" placeholder="e.g. 400m Repeats">
+
+            <label>Instructions</label>
+            <textarea id="w-desc" rows="3" placeholder="Paces, rest, recovery..."></textarea>
+
+            <label>Assign to Athletes:</label>
+            <div class="selector-box" id="athlete-selector">
+                </div>
+            
+            <button class="primary" onclick="saveWorkout()" id="w-save-btn">Post Workout</button>
+            <button class="secondary hidden" id="w-cancel-edit" onclick="resetWorkoutForm()">Cancel Edit</button>
         </div>
-        <div id="workoutList"></div>
+    </div>
+
+    <div id="page-calendar" class="hidden">
+        <div class="card">
+            <h2 id="monthLabel" style="text-align: center;"></h2>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
     </div>
 
     <div id="page-athletes" class="hidden">
         <div class="card">
-            <h2 id="athlete-form-title">Add Athlete</h2>
-            <input type="hidden" id="athlete-index" value="-1">
-            <input type="text" id="a-name" placeholder="Full Name">
-            <input type="email" id="a-email" placeholder="Email Address">
-            <label>Seasons:</label>
-            <div class="checkbox-group">
-                <div class="checkbox-item"><input type="checkbox" id="s-xc"> XC</div>
-                <div class="checkbox-item"><input type="checkbox" id="s-winter"> Winter Track</div>
-                <div class="checkbox-item"><input type="checkbox" id="s-spring"> Spring Track</div>
+            <h2 id="a-form-title">Add/Edit Athlete</h2>
+            <input type="hidden" id="a-edit-id" value="-1">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <input type="text" id="a-name" placeholder="Name">
+                <input type="email" id="a-email" placeholder="Email">
             </div>
-            <button onclick="saveAthlete()" id="save-athlete-btn">Add Athlete</button>
-            <button onclick="resetAthleteForm()" class="undo-btn" style="background:#94a3b8">Cancel</button>
+            <div class="selector-item">
+                <input type="checkbox" id="s-xc"> XC 
+                <input type="checkbox" id="s-winter"> Winter 
+                <input type="checkbox" id="s-spring"> Spring
+            </div>
+            <button class="primary" onclick="saveAthlete()">Save Athlete</button>
         </div>
         <div class="card">
-            <h3>Roster</h3>
-            <table id="athleteTable">
+            <table>
                 <thead><tr><th>Name</th><th>Email</th><th>Seasons</th><th>Actions</th></tr></thead>
                 <tbody id="athleteBody"></tbody>
             </table>
         </div>
     </div>
 
-    <div id="page-calendar" class="hidden">
-        <div class="card">
-            <h2 id="monthLabel">Month</h2>
-            <div class="calendar-grid" id="calendarGrid"></div>
-        </div>
-    </div>
-
 </div>
 
 <script>
-    // State Management
-    let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
-    let athletes = JSON.parse(localStorage.getItem('athletes')) || [];
-    let lastDeletedWorkout = null;
+    let athletes = JSON.parse(localStorage.getItem('roster')) || [];
+    let workouts = JSON.parse(localStorage.getItem('trainingPlan')) || [];
 
-    // Navigation
-    function showPage(pageId) {
-        ['workouts', 'athletes', 'calendar'].forEach(p => {
-            document.getElementById(`page-${p}`).classList.add('hidden');
-            document.getElementById(`btn-${p}`).classList.remove('active');
-        });
-        document.getElementById(`page-${pageId}`).classList.remove('hidden');
-        document.getElementById(`btn-${pageId}`).classList.add('active');
-        if(pageId === 'calendar') renderCalendar();
-    }
-
-    // --- WORKOUT LOGIC ---
-    function saveWorkout() {
-        const title = document.getElementById('w-title').value;
-        const desc = document.getElementById('w-desc').value;
-        if(!title) return;
+    function showPage(id) {
+        document.querySelectorAll('.container > div').forEach(p => p.classList.add('hidden'));
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.getElementById('page-' + id).classList.remove('hidden');
+        document.getElementById('btn-' + id).classList.add('active');
         
-        workouts.unshift({ title, desc, date: new Date().toLocaleDateString() });
-        updateWorkouts();
-        document.getElementById('w-title').value = '';
-        document.getElementById('w-desc').value = '';
-        document.getElementById('undo-w-btn').classList.remove('hidden');
-    }
-
-    function undoLastWorkout() {
-        workouts.shift();
-        updateWorkouts();
-        document.getElementById('undo-w-btn').classList.add('hidden');
-    }
-
-    function updateWorkouts() {
-        localStorage.setItem('workouts', JSON.stringify(workouts));
-        const list = document.getElementById('workoutList');
-        list.innerHTML = workouts.map(w => `
-            <div class="card">
-                <h3>${w.title}</h3>
-                <p>${w.desc}</p>
-                <small>${w.date}</small>
-            </div>
-        `).join('');
+        if(id === 'workouts') renderAthleteSelector();
+        if(id === 'calendar') renderCalendar();
+        if(id === 'athletes') renderRoster();
     }
 
     // --- ATHLETE LOGIC ---
     function saveAthlete() {
-        const name = document.getElementById('a-name').value;
-        const email = document.getElementById('a-email').value;
-        const idx = parseInt(document.getElementById('athlete-index').value);
-        
-        const seasons = [];
-        if(document.getElementById('s-xc').checked) seasons.push('XC');
-        if(document.getElementById('s-winter').checked) seasons.push('Winter');
-        if(document.getElementById('s-spring').checked) seasons.push('Spring');
+        const id = document.getElementById('a-edit-id').value;
+        const data = {
+            name: document.getElementById('a-name').value,
+            email: document.getElementById('a-email').value,
+            xc: document.getElementById('s-xc').checked,
+            winter: document.getElementById('s-winter').checked,
+            spring: document.getElementById('s-spring').checked
+        };
+        if(!data.name) return;
 
-        const athleteData = { name, email, seasons };
+        if(id == "-1") athletes.push(data);
+        else athletes[id] = data;
 
-        if(idx === -1) {
-            athletes.push(athleteData);
-        } else {
-            athletes[idx] = athleteData;
-        }
-
-        localStorage.setItem('athletes', JSON.stringify(athletes));
-        resetAthleteForm();
-        renderAthletes();
+        localStorage.setItem('roster', JSON.stringify(athletes));
+        clearAthleteForm();
+        renderRoster();
     }
 
-    function editAthlete(index) {
-        const a = athletes[index];
-        document.getElementById('a-name').value = a.name;
-        document.getElementById('a-email').value = a.email;
-        document.getElementById('s-xc').checked = a.seasons.includes('XC');
-        document.getElementById('s-winter').checked = a.seasons.includes('Winter');
-        document.getElementById('s-spring').checked = a.seasons.includes('Spring');
-        document.getElementById('athlete-index').value = index;
-        document.getElementById('athlete-form-title').innerText = "Edit Athlete";
-        document.getElementById('save-athlete-btn').innerText = "Update Athlete";
-    }
-
-    function deleteAthlete(index) {
-        if(confirm("Delete this athlete?")) {
-            athletes.splice(index, 1);
-            localStorage.setItem('athletes', JSON.stringify(athletes));
-            renderAthletes();
-        }
-    }
-
-    function resetAthleteForm() {
-        document.getElementById('athlete-index').value = "-1";
+    function clearAthleteForm() {
+        document.getElementById('a-edit-id').value = "-1";
         document.getElementById('a-name').value = "";
         document.getElementById('a-email').value = "";
-        document.querySelectorAll('.checkbox-group input').forEach(c => c.checked = false);
-        document.getElementById('athlete-form-title').innerText = "Add Athlete";
-        document.getElementById('save-athlete-btn').innerText = "Add Athlete";
+        document.getElementById('s-xc').checked = false;
+        document.getElementById('s-winter').checked = false;
+        document.getElementById('s-spring').checked = false;
     }
 
-    function renderAthletes() {
+    function renderRoster() {
         const body = document.getElementById('athleteBody');
         body.innerHTML = athletes.map((a, i) => `
             <tr>
                 <td>${a.name}</td>
                 <td>${a.email}</td>
-                <td>${a.seasons.map(s => `<span class="season-pill">${s}</span>`).join('')}</td>
-                <td>
-                    <button class="edit-btn" onclick="editAthlete(${i})">Edit</button>
-                    <button class="del-btn" onclick="deleteAthlete(${i})">X</button>
-                </td>
+                <td>${a.xc?'XC ':''}${a.winter?'Winter ':''}${a.spring?'Spring':''}</td>
+                <td><button onclick="editAthlete(${i})">Edit</button></td>
             </tr>
         `).join('');
+    }
+
+    function editAthlete(i) {
+        const a = athletes[i];
+        document.getElementById('a-edit-id').value = i;
+        document.getElementById('a-name').value = a.name;
+        document.getElementById('a-email').value = a.email;
+        document.getElementById('s-xc').checked = a.xc;
+        document.getElementById('s-winter').checked = a.winter;
+        document.getElementById('s-spring').checked = a.spring;
+    }
+
+    // --- WORKOUT LOGIC ---
+    function renderAthleteSelector() {
+        const box = document.getElementById('athlete-selector');
+        box.innerHTML = athletes.length ? 
+            athletes.map((a, i) => `
+                <div class="selector-item">
+                    <input type="checkbox" class="a-check" value="${a.name}"> ${a.name}
+                </div>
+            `).join('') : "No athletes found. Add some in the Roster tab.";
+    }
+
+    function saveWorkout() {
+        const id = document.getElementById('w-edit-id').value;
+        const selectedAthletes = Array.from(document.querySelectorAll('.a-check:checked')).map(c => c.value);
+        
+        const data = {
+            date: document.getElementById('w-date').value,
+            title: document.getElementById('w-title').value,
+            desc: document.getElementById('w-desc').value,
+            assigned: selectedAthletes
+        };
+
+        if(!data.date || !data.title) return alert("Date and Title required");
+
+        if(id == "-1") workouts.push(data);
+        else workouts[id] = data;
+
+        localStorage.setItem('trainingPlan', JSON.stringify(workouts));
+        resetWorkoutForm();
+        showPage('calendar');
+    }
+
+    function resetWorkoutForm() {
+        document.getElementById('w-edit-id').value = "-1";
+        document.getElementById('w-date').value = "";
+        document.getElementById('w-title').value = "";
+        document.getElementById('w-desc').value = "";
+        document.getElementById('w-form-title').innerText = "Assign New Workout";
+        document.getElementById('w-save-btn').innerText = "Post Workout";
+        document.getElementById('w-cancel-edit').classList.add('hidden');
+        renderAthleteSelector();
+    }
+
+    function editWorkout(i) {
+        showPage('workouts');
+        const w = workouts[i];
+        document.getElementById('w-edit-id').value = i;
+        document.getElementById('w-date').value = w.date;
+        document.getElementById('w-title').value = w.title;
+        document.getElementById('w-desc').value = w.desc;
+        document.getElementById('w-form-title').innerText = "Editing Workout";
+        document.getElementById('w-save-btn').innerText = "Update Workout";
+        document.getElementById('w-cancel-edit').classList.remove('hidden');
+        
+        // Mark checked athletes
+        renderAthleteSelector();
+        document.querySelectorAll('.a-check').forEach(cb => {
+            if(w.assigned.includes(cb.value)) cb.checked = true;
+        });
     }
 
     // --- CALENDAR LOGIC ---
@@ -227,14 +248,24 @@
         for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="calendar-day" style="background:#f1f5f9"></div>`;
         
         for(let d=1; d<=daysInMonth; d++) {
+            const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             const isToday = d === now.getDate() ? 'today' : '';
-            grid.innerHTML += `<div class="calendar-day ${isToday}">${d}</div>`;
+            
+            let dayHtml = `<div class="calendar-day ${isToday}"><span class="day-num">${d}</span>`;
+            
+            workouts.forEach((w, index) => {
+                if(w.date === dateStr) {
+                    dayHtml += `<div class="cal-workout-link" onclick="editWorkout(${index})">${w.title}</div>`;
+                }
+            });
+
+            dayHtml += `</div>`;
+            grid.innerHTML += dayHtml;
         }
     }
 
-    // Initial Load
-    updateWorkouts();
-    renderAthletes();
+    // Init
+    showPage('workouts');
 </script>
 
 </body>
