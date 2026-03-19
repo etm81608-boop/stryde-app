@@ -3,199 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stryde Coach | Workout Manager</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Coach's Running Portal</title>
     <style>
-        .runner-card.selected { border-color: #3b82f6; background-color: #eff6ff; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        h2 { margin-top: 0; color: var(--primary); }
+
+        .form-group { margin-bottom: 15px; }
+
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        button:hover { opacity: 0.9; }
+
+        .workout-item {
+            border-left: 5px solid var(--primary);
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #fff;
+            border-radius: 0 8px 8px 0;
+            position: relative;
+        }
+
+        .workout-date { font-size: 0.85rem; color: #64748b; }
+        .workout-type { 
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+<body>
 
-    <nav class="bg-white border-b sticky top-0 z-10">
-        <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-            <h1 class="font-black text-xl tracking-tighter text-blue-600 uppercase">Stryde Elite</h1>
-            <div class="flex gap-4">
-                <button onclick="showTab('builder')" class="text-sm font-bold uppercase hover:text-blue-600">Builder</button>
-                <button onclick="showTab('roster')" class="text-sm font-bold uppercase hover:text-blue-600">Roster</button>
-            </div>
+<div class="container">
+    <header>
+        <h1>🏃‍♂️ Athlete Training Portal</h1>
+        <p>Create and share workouts with your team.</p>
+    </header>
+
+    <div class="card">
+        <h2>Create New Workout</h2>
+        <div class="form-group">
+            <label>Workout Title</label>
+            <input type="text" id="title" placeholder="e.g. 5x1000m Intervals">
         </div>
-    </nav>
+        <div class="form-group">
+            <label>Type</label>
+            <select id="type">
+                <option value="Intervals">Intervals</option>
+                <option value="Long Run">Long Run</option>
+                <option value="Tempo">Tempo</option>
+                <option value="Recovery">Recovery</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Instructions</label>
+            <textarea id="desc" rows="3" placeholder="Warm up 2 miles, then..."></textarea>
+        </div>
+        <button onclick="addWorkout()">Post to Dashboard</button>
+    </div>
 
-    <main class="max-w-5xl mx-auto p-6">
+    <div class="card">
+        <h2>Active Workout Feed</h2>
+        <div id="workoutFeed">
+            </div>
+    </div>
+</div>
+
+<script>
+    function addWorkout() {
+        const title = document.getElementById('title').value;
+        const type = document.getElementById('type').value;
+        const desc = document.getElementById('desc').value;
+        const date = new Date().toLocaleDateString();
+
+        if(!title || !desc) {
+            alert("Please fill out all fields!");
+            return;
+        }
+
+        const feed = document.getElementById('workoutFeed');
         
-        <div id="builder" class="tab-content active">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
-                <div class="lg:col-span-1">
-                    <h2 class="text-xs font-black uppercase text-slate-400 mb-4">1. Select Athletes</h2>
-                    <div id="selectionList" class="space-y-2">
-                        </div>
-                </div>
-
-                <div class="lg:col-span-2 space-y-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
-                        <h2 class="text-xs font-black uppercase text-slate-400 mb-4">2. Create Workout</h2>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold mb-1">Warmup</label>
-                                <input type="text" id="warmup" placeholder="e.g. 2mi easy + drills" class="w-full p-3 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold mb-1">Main Set</label>
-                                <textarea id="mainSet" rows="3" placeholder="e.g. 8x400m @ goal pace w/ 2:00 rest" class="w-full p-3 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-blue-500 font-bold"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold mb-1">Cooldown</label>
-                                <input type="text" id="cooldown" placeholder="e.g. 1mi shakeout + stretch" class="w-full p-3 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-blue-500">
-                            </div>
-                            <button onclick="assignWorkouts()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase tracking-widest hover:bg-blue-700 transition">Assign to Selected</button>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
-                        <h2 class="text-xs font-black uppercase text-slate-400 mb-4">Today's Assignments</h2>
-                        <div id="workoutFeed" class="space-y-3">
-                            </div>
-                    </div>
-                </div>
+        const workoutHTML = `
+            <div class="workout-item">
+                <span class="workout-type">${type}</span>
+                <span class="workout-date">${date}</span>
+                <h3>${title}</h3>
+                <p>${desc}</p>
             </div>
-        </div>
+        `;
 
-        <div id="roster" class="tab-content">
-            <div class="max-w-xl mx-auto">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border mb-8">
-                    <h2 class="text-xs font-black uppercase text-slate-400 mb-4">Add New Runner</h2>
-                    <div class="flex gap-2">
-                        <input type="text" id="newRunnerName" placeholder="Runner Name" class="flex-1 p-3 bg-slate-50 border rounded-lg outline-none">
-                        <button onclick="addRunner()" class="bg-slate-900 text-white px-6 py-3 rounded-lg font-bold">Add</button>
-                    </div>
-                </div>
-                
-                <div id="rosterList" class="space-y-2">
-                    </div>
-            </div>
-        </div>
+        feed.insertAdjacentHTML('afterbegin', workoutHTML);
 
-    </main>
+        // Clear inputs
+        document.getElementById('title').value = '';
+        document.getElementById('desc').value = '';
+    }
+</script>
 
-    <script>
-        // State Management
-        let runners = JSON.parse(localStorage.getItem('stryde_runners')) || [];
-        let workouts = JSON.parse(localStorage.getItem('stryde_workouts')) || [];
-        let selectedRunners = new Set();
-
-        // UI Logic
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            render();
-        }
-
-        // Roster Functions
-        function addRunner() {
-            const nameInput = document.getElementById('newRunnerName');
-            if (!nameInput.value) return;
-            runners.push({ id: Date.now(), name: nameInput.value });
-            nameInput.value = '';
-            save();
-            render();
-        }
-
-        function deleteRunner(id) {
-            runners = runners.filter(r => r.id !== id);
-            save();
-            render();
-        }
-
-        // Workout Functions
-        function toggleRunner(id) {
-            if (selectedRunners.has(id)) selectedRunners.delete(id);
-            else selectedRunners.add(id);
-            render();
-        }
-
-        function assignWorkouts() {
-            const main = document.getElementById('mainSet').value;
-            const warm = document.getElementById('warmup').value;
-            const cool = document.getElementById('cooldown').value;
-
-            if (selectedRunners.size === 0 || !main) {
-                alert("Select runners and enter a main set!");
-                return;
-            }
-
-            selectedRunners.forEach(runnerId => {
-                const runner = runners.find(r => r.id === runnerId);
-                workouts.unshift({
-                    id: Date.now() + Math.random(),
-                    runnerName: runner.name,
-                    warm, main, cool,
-                    date: new Date().toLocaleDateString()
-                });
-            });
-
-            // Reset Form
-            selectedRunners.clear();
-            document.getElementById('mainSet').value = '';
-            document.getElementById('warmup').value = '';
-            document.getElementById('cooldown').value = '';
-            
-            save();
-            render();
-        }
-
-        function deleteWorkout(id) {
-            workouts = workouts.filter(w => w.id !== id);
-            save();
-            render();
-        }
-
-        // Data Persistance
-        function save() {
-            localStorage.setItem('stryde_runners', JSON.stringify(runners));
-            localStorage.setItem('stryde_workouts', JSON.stringify(workouts));
-        }
-
-        // Rendering
-        function render() {
-            // Render selection list in builder
-            const selectionList = document.getElementById('selectionList');
-            selectionList.innerHTML = runners.map(r => `
-                <div onclick="toggleRunner(${r.id})" class="runner-card p-3 border rounded-xl cursor-pointer transition ${selectedRunners.has(r.id) ? 'selected ring-2 ring-blue-500' : 'bg-white'}">
-                    <span class="font-bold text-sm">${r.name}</span>
-                </div>
-            `).join('');
-
-            // Render workout feed
-            const feed = document.getElementById('workoutFeed');
-            const today = new Date().toLocaleDateString();
-            const todaysWorkouts = workouts.filter(w => w.date === today);
-
-            feed.innerHTML = todaysWorkouts.length ? todaysWorkouts.map(w => `
-                <div class="p-4 bg-slate-50 border rounded-xl relative group">
-                    <button onclick="deleteWorkout(${w.id})" class="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">✕</button>
-                    <div class="text-[10px] font-black uppercase text-blue-600 mb-1">${w.runnerName}</div>
-                    <div class="text-sm font-bold">${w.main}</div>
-                    <div class="text-[10px] text-slate-500 mt-1">${w.warm ? 'Warmup: ' + w.warm : ''} ${w.cool ? ' | Cool: ' + w.cool : ''}</div>
-                </div>
-            `).join('') : '<p class="text-sm text-slate-400 italic">No workouts assigned for today yet.</p>';
-
-            // Render roster list
-            const rosterList = document.getElementById('rosterList');
-            rosterList.innerHTML = runners.map(r => `
-                <div class="flex items-center justify-between p-4 bg-white border rounded-xl shadow-sm">
-                    <span class="font-bold">${r.name}</span>
-                    <button onclick="deleteRunner(${r.id})" class="text-xs font-black uppercase text-red-500 hover:underline">Remove</button>
-                </div>
-            `).join('');
-        }
-
-        // Initial Load
-        render();
-    </script>
 </body>
 </html>
               
