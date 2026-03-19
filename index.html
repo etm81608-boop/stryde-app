@@ -250,19 +250,48 @@
     }
 
     function renderCalendar() {
-        const grid = document.getElementById('calendarGrid');
-        const label = document.getElementById('monthLabel');
-        const now = new Date();
-        label.innerText = now.toLocaleString('default', { month: 'long', year: 'numeric' });
-        grid.innerHTML = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="calendar-header">${d}</div>`).join('');
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
-        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-        for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="calendar-day" style="background:#f8fafc"></div>`;
-        for(let d=1; d<=daysInMonth; d++) {
-            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            let dayHtml = `<div class="calendar-day"><span style="font-weight:bold; color:#94a3b8">${d}</span>`;
-            workouts.forEach(w => { if(w.date === dateStr) dayHtml += `<div class="cal-workout-block"><strong>${w.title}</strong></div>`; });
-            grid.innerHTML += dayHtml + `</div>`;
+
+  const month = monthPicker.value;
+  if (!month) return;
+
+  const [y, m] = month.split("-");
+  const days = new Date(y, m, 0).getDate();
+
+  let html = "";
+
+  // Loop through each day of the month
+  for (let d = 1; d <= days; d++) {
+
+    let date = `${month}-${String(d).padStart(2,'0')}`;
+
+    // Find workouts for this specific day
+    let dayWorkouts = workouts.filter(w => w.date === date);
+
+    // Start building the calendar cell
+    let cellContent = `<b>${d}</b><br>`;
+
+    // Add each workout into the cell
+    dayWorkouts.forEach(w => {
+      cellContent += `
+        <div style="font-size:12px; margin-top:4px;">
+          <b>${w.title}</b><br>
+          ${getAthleteName(w.assign)}
+        </div>
+      `;
+    });
+
+    // Create the calendar box
+    html += `
+      <div class="calendar-day" onclick="showDay('${date}')">
+        ${cellContent}
+      </div>
+    `;
+  }
+
+  // Render calendar
+  calendarGrid.innerHTML = html;
+}
+
         }
     }
 
