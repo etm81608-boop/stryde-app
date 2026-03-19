@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stryde Elite - Master Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -9,19 +10,21 @@
         .active-tab { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: 900; }
         .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .label-xs { font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin-bottom: 4px; display: block; }
-        .pb-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-        .pb-tag { background: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-size: 9px; font-weight: bold; color: #475569; border: 1px solid #e2e8f0; }
-        input::placeholder { color: #475569; opacity: 0.5; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #e2e8f0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+        .cal-day { min-height: 120px; background: white; padding: 6px; border: 0.5px solid #f1f5f9; }
+        .workout-pill { font-size: 9px; padding: 3px 5px; border-radius: 4px; margin-bottom: 2px; background: #2563eb; color: white; width: 100%; text-align: left; border: none; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pb-tag { background: #f8fafc; padding: 2px 5px; border-radius: 4px; font-size: 9px; font-weight: bold; color: #475569; border: 1px solid #e2e8f0; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-900">
 
     <nav class="bg-slate-900 text-white sticky top-0 z-50 shadow-xl no-print">
-        <div class="p-4 flex justify-between items-center">
+        <div class="p-4 flex justify-between items-center max-w-7xl mx-auto">
             <h1 class="font-black italic text-xl text-blue-400 uppercase tracking-tighter">Stryde Elite</h1>
-            <div class="flex bg-slate-800 rounded-lg p-1 ml-2">
-                <button id="nav-builder" onclick="switchView('builder')" class="text-[10px] font-bold uppercase px-3 py-2 rounded-md active-tab">Builder</button>
-                <button id="nav-roster" onclick="switchView('roster')" class="text-[10px] font-bold uppercase px-3 py-2 rounded-md">Roster</button>
+            <div class="flex bg-slate-800 rounded-lg p-1">
+                <button id="nav-builder" onclick="switchView('builder')" class="text-[10px] font-bold uppercase px-4 py-2 rounded-md active-tab">Builder</button>
+                <button id="nav-calendar" onclick="switchView('calendar')" class="text-[10px] font-bold uppercase px-4 py-2 rounded-md">Calendar</button>
+                <button id="nav-roster" onclick="switchView('roster')" class="text-[10px] font-bold uppercase px-4 py-2 rounded-md">Roster</button>
             </div>
         </div>
         <div class="bg-white p-3 border-b flex gap-3 overflow-x-auto shadow-inner" id="weekRibbon"></div>
@@ -29,176 +32,288 @@
 
     <main class="p-6 max-w-7xl mx-auto">
         
+        <div id="view-builder" class="flex flex-col lg:flex-row gap-8">
+            <aside class="w-full lg:w-80 shrink-0">
+                <div class="flex justify-between items-end mb-2">
+                    <h2 class="label-xs text-blue-600">Daily Roster (<span id="aside-date"></span>)</h2>
+                    <button onclick="undoLastAssignment()" class="text-[9px] font-black text-red-500 uppercase">Undo ↩️</button>
+                </div>
+                <div id="sideRoster" class="space-y-2"></div>
+            </aside>
+            <section class="flex-1 card border-t-4 border-blue-600">
+                <div class="flex justify-between items-center mb-4"><span class="label-xs">1. Select Athletes</span><button onclick="toggleAll('.run-check')" class="text-[9px] font-bold text-blue-600 uppercase underline">Select All</button></div>
+                <div id="checklist" class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6 p-3 bg-slate-50 rounded-lg border max-h-48 overflow-y-auto"></div>
+                
+                <span class="label-xs">2. Assignment Details</span>
+                <input type="text" id="workMain" placeholder="MAIN SET (e.g. 8x400m @ 72s)" class="w-full p-4 border rounded-xl font-bold text-lg mb-4 outline-none focus:ring-2 ring-blue-500">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <input type="text" id="workWarm" placeholder="Warmup" class="p-3 border rounded-lg text-sm bg-slate-50">
+                    <input type="text" id="workDrills" placeholder="Drills" class="p-3 border rounded-lg text-sm bg-slate-50">
+                    <input type="text" id="workLift" placeholder="Lift" class="p-3 border rounded-lg text-sm bg-slate-50">
+                    <input type="text" id="workCool" placeholder="Cooldown" class="p-3 border rounded-lg text-sm bg-slate-50">
+                    <input type="text" id="workXT" placeholder="Cross Train" class="p-3 border rounded-lg text-sm bg-slate-50">
+                </div>
+                <button onclick="saveWorkout()" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl mt-6 uppercase text-xs hover:bg-black transition">Assign to Selected</button>
+            </section>
+        </div>
+
         <div id="view-roster" class="hidden space-y-6">
             <div class="card bg-slate-900 text-white border-t-4 border-blue-500">
-                <h3 id="form-title" class="label-xs text-blue-400 mb-4">Add New Athlete</h3>
-                <input type="hidden" id="edit-runner-id" value="">
-                
+                <h3 id="roster-header" class="label-xs text-blue-400 mb-4">Add New Athlete</h3>
+                <input type="hidden" id="edit-runner-id">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <div><label class="label-xs text-slate-500">Full Name</label><input type="text" id="run-name" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-white outline-none focus:border-blue-500"></div>
-                    <div><label class="label-xs text-slate-500">Gmail</label><input type="email" id="run-email" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-white outline-none"></div>
-                    <div><label class="label-xs text-slate-500">Year in School</label><input type="text" id="run-year" placeholder="Junior" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-white outline-none"></div>
-                    <div><label class="label-xs text-slate-500">Experience (Yrs)</label><input type="number" id="run-exp" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-white outline-none"></div>
+                    <input type="text" id="run-name" placeholder="Full Name" class="p-2 bg-slate-800 rounded text-white border border-slate-700 outline-none focus:border-blue-500">
+                    <input type="email" id="run-email" placeholder="Gmail Address" class="p-2 bg-slate-800 rounded text-white border border-slate-700 outline-none">
+                    <input type="text" id="run-year" placeholder="Year (e.g. Soph)" class="p-2 bg-slate-800 rounded text-white border border-slate-700 outline-none">
+                    <input type="number" id="run-exp" placeholder="Experience (Yrs)" class="p-2 bg-slate-800 rounded text-white border border-slate-700 outline-none">
                 </div>
-
-                <div class="label-xs text-slate-500 mb-2">Personal Bests</div>
-                <div class="pb-grid mb-6">
-                    <input type="text" id="pb-100" placeholder="100m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-200" placeholder="200m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-400" placeholder="400m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-800" placeholder="800m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-1600" placeholder="1600m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-3000" placeholder="3000m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-3200" placeholder="3200m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-5000" placeholder="5000m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
+                <div class="label-xs text-slate-500 mb-2">Personal Bests (PBs)</div>
+                <div class="grid grid-cols-4 md:grid-cols-8 gap-2 mb-6">
+                    <input type="text" id="pb-100" placeholder="100m" class="p-2 bg-slate-800 rounded text-xs text-white border border-slate-700">
+                    <input type="text" id="pb-200" placeholder="200m" class="p-2 bg-slate-800 rounded text-xs text-white border border-slate-700">
+                    <input type="text" id="pb-400" placeholder="400m" class="p-2 bg-slate-800 rounded text-xs text-white border border-slate-700">
+                    <input type="text" id="pb-800" placeholder="800m" class="p-2 bg-slate-800 rounded text-xs text-white border border-slate-700">
+                    <input type="text" id="pb-1600" placeholder="1600m" class="p-2 bg-slate-800 rounded text-xs text-white border border-slate-700">
+                    <input type="text" id="pb-3000" placeholder="3000m" class="p-2 bg-slate-800 rounded text-xs text-white border border-slate-700">
+                    <input type="text" id="pb-3200" placeholder="3200m" class="p-2 bg-slate-800 rounded text-xs text-white border border-slate-700">
+                    <input type="text" id="pb-5000" placeholder="5000m" class="p-2 bg-slate-800 rounded text-xs text-white border border-slate-700">
                 </div>
-
                 <div class="flex gap-2">
-                    <button id="add-runner-btn" onclick="addRunner()" class="bg-blue-600 hover:bg-blue-500 flex-1 p-3 rounded font-black uppercase text-xs transition">Save Athlete Profile</button>
-                    <button onclick="resetRosterForm()" class="bg-slate-700 p-3 rounded font-black uppercase text-xs">Clear</button>
+                    <button id="save-run-btn" onclick="submitRoster()" class="flex-1 bg-blue-600 p-3 rounded font-black uppercase text-xs">Save Athlete Profile</button>
+                    <button onclick="clearRosterForm()" class="bg-slate-700 p-3 rounded font-black uppercase text-xs">Clear/Cancel</button>
                 </div>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="rosterList"></div>
+            <div id="roster-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
-        <div id="view-builder" class="space-y-4">
-            <div class="card">
-                <h2 class="label-xs text-blue-600">Daily Roster Checklist</h2>
-                <div id="checklist" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
+        <div id="view-calendar" class="hidden">
+            <h2 class="text-xl font-black uppercase mb-4 text-slate-400">Monthly Training Log</h2>
+            <div id="calendarGrid" class="cal-grid"></div>
+        </div>
+    </main>
+
+    <div id="editModal" class="fixed inset-0 z-[100] hidden bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-xl p-6 shadow-2xl">
+            <input type="hidden" id="edit-work-id">
+            <h4 id="editWorkTitle" class="font-black uppercase text-xs text-blue-600 mb-4">Edit Workout Assignment</h4>
+            <input type="text" id="editWorkMain" class="w-full p-4 border rounded-xl font-bold mb-4 outline-none focus:ring-2 ring-blue-500">
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <input type="text" id="editWorkWarm" placeholder="Warmup" class="p-2 border rounded text-sm bg-slate-50">
+                <input type="text" id="editWorkDrills" placeholder="Drills" class="p-2 border rounded text-sm bg-slate-50">
+                <input type="text" id="editWorkLift" placeholder="Lift" class="p-2 border rounded text-sm bg-slate-50">
+                <input type="text" id="editWorkXT" placeholder="Cross Train" class="p-2 border rounded text-sm bg-slate-50">
+                <input type="text" id="editWorkCool" placeholder="Cooldown" class="p-2 border rounded text-sm bg-slate-50">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="updateWorkout()" class="flex-1 bg-blue-600 text-white font-black py-3 rounded-lg uppercase text-xs">Save Changes</button>
+                <button onclick="deleteWorkout()" class="bg-red-50 text-red-600 px-6 rounded-lg uppercase text-xs font-black">Delete</button>
+                <button onclick="closeModal()" class="bg-slate-100 px-4 rounded-lg font-bold text-xs uppercase">Close</button>
             </div>
         </div>
-
-    </main>
+    </div>
 
     <script>
         let runners = JSON.parse(localStorage.getItem('runners') || "[]");
+        let workouts = JSON.parse(localStorage.getItem('workouts') || "[]");
+        let lastBatchIds = [];
         let selDate = new Date().toISOString().split('T')[0];
 
         function switchView(view) {
-            ['builder','roster'].forEach(v => {
+            ['builder','calendar','roster'].forEach(v => {
                 document.getElementById('view-'+v).classList.toggle('hidden', view !== v);
                 document.getElementById('nav-'+v).classList.toggle('active-tab', view === v);
             });
             renderAll();
         }
 
-        // --- THE FIX: ADD/UPDATE RUNNER ---
-        function addRunner() {
-            const editId = document.getElementById('edit-runner-id').value;
+        // --- ROSTER ENGINE ---
+        function submitRoster() {
+            const id = document.getElementById('edit-runner-id').value;
             const name = document.getElementById('run-name').value;
-            if(!name) return alert("Please enter a name.");
+            if(!name) return alert("Name is required");
 
-            const runnerObj = {
-                id: editId || Math.random().toString(36).substr(2, 9),
-                name: name,
+            const rData = {
+                id: id || Math.random().toString(36).substr(2,9),
+                name, 
                 email: document.getElementById('run-email').value,
                 year: document.getElementById('run-year').value,
                 exp: document.getElementById('run-exp').value,
                 pbs: {
-                    "100": document.getElementById('pb-100').value,
-                    "200": document.getElementById('pb-200').value,
-                    "400": document.getElementById('pb-400').value,
-                    "800": document.getElementById('pb-800').value,
-                    "1600": document.getElementById('pb-1600').value,
-                    "3000": document.getElementById('pb-3000').value,
-                    "3200": document.getElementById('pb-3200').value,
-                    "5000": document.getElementById('pb-5000').value
+                    "100": document.getElementById('pb-100').value, "200": document.getElementById('pb-200').value,
+                    "400": document.getElementById('pb-400').value, "800": document.getElementById('pb-800').value,
+                    "1600": document.getElementById('pb-1600').value, "3000": document.getElementById('pb-3000').value,
+                    "3200": document.getElementById('pb-3200').value, "5000": document.getElementById('pb-5000').value
                 }
             };
 
-            if (editId) {
-                // Update existing
-                const index = runners.findIndex(r => r.id === editId);
-                if(index !== -1) runners[index] = runnerObj;
+            if(id) {
+                const idx = runners.findIndex(r => r.id === id);
+                runners[idx] = rData;
             } else {
-                // Add new
-                runners.push(runnerObj);
+                runners.push(rData);
             }
 
             localStorage.setItem('runners', JSON.stringify(runners));
-            resetRosterForm();
+            clearRosterForm();
             renderAll();
         }
 
         function editRunner(id) {
             const r = runners.find(i => i.id === id);
-            if(!r) return;
-
-            // Fill Form
             document.getElementById('edit-runner-id').value = r.id;
             document.getElementById('run-name').value = r.name;
             document.getElementById('run-email').value = r.email || "";
             document.getElementById('run-year').value = r.year || "";
             document.getElementById('run-exp').value = r.exp || "";
+            Object.keys(r.pbs || {}).forEach(k => document.getElementById('pb-'+k).value = r.pbs[k]);
             
-            // Fill PBs
-            const pbs = r.pbs || {};
-            Object.keys(pbs).forEach(dist => {
-                const el = document.getElementById('pb-' + dist);
-                if(el) el.value = pbs[dist] || "";
-            });
-
-            // UI Changes
-            document.getElementById('form-title').innerText = "Editing: " + r.name;
-            document.getElementById('add-runner-btn').innerText = "Update Athlete Profile";
-            document.getElementById('add-runner-btn').classList.replace('bg-blue-600', 'bg-emerald-600');
-            
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById('roster-header').innerText = "Editing: " + r.name;
+            document.getElementById('save-run-btn').innerText = "Update Athlete Profile";
+            document.getElementById('save-run-btn').classList.replace('bg-blue-600', 'bg-emerald-600');
+            window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        function resetRosterForm() {
+        function clearRosterForm() {
             document.getElementById('edit-runner-id').value = "";
-            document.getElementById('form-title').innerText = "Add New Athlete";
-            document.getElementById('add-runner-btn').innerText = "Save Athlete Profile";
-            document.getElementById('add-runner-btn').classList.add('bg-blue-600');
-            document.getElementById('add-runner-btn').classList.remove('bg-emerald-600');
-            
-            ['run-name','run-email','run-year','run-exp','pb-100','pb-200','pb-400','pb-800','pb-1600','pb-3000','pb-3200','pb-5000'].forEach(id => {
-                document.getElementById(id).value = "";
-            });
+            document.getElementById('roster-header').innerText = "Add New Athlete";
+            document.getElementById('save-run-btn').innerText = "Save Athlete Profile";
+            document.getElementById('save-run-btn').className = "flex-1 bg-blue-600 p-3 rounded font-black uppercase text-xs";
+            ['run-name','run-email','run-year','run-exp','pb-100','pb-200','pb-400','pb-800','pb-1600','pb-3000','pb-3200','pb-5000'].forEach(id => document.getElementById(id).value = "");
         }
 
-        function removeRunner(id) {
-            if(confirm("Permanently delete this athlete?")) {
-                runners = runners.filter(r => r.id !== id);
-                localStorage.setItem('runners', JSON.stringify(runners));
-                renderAll();
-            }
+        // --- WORKOUT ENGINE ---
+        function openWorkEdit(id) {
+            const w = workouts.find(i => i.id === id);
+            document.getElementById('edit-work-id').value = w.id;
+            document.getElementById('editWorkTitle').innerText = `Edit: ${w.name}`;
+            document.getElementById('editWorkMain').value = w.main;
+            document.getElementById('editWorkWarm').value = w.warm || "";
+            document.getElementById('editWorkDrills').value = w.drills || "";
+            document.getElementById('editWorkLift').value = w.lift || "";
+            document.getElementById('editWorkXT').value = w.xt || "";
+            document.getElementById('editWorkCool').value = w.cool || "";
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function updateWorkout() {
+            const id = document.getElementById('edit-work-id').value;
+            const idx = workouts.findIndex(w => w.id === id);
+            workouts[idx].main = document.getElementById('editWorkMain').value;
+            workouts[idx].warm = document.getElementById('editWorkWarm').value;
+            workouts[idx].drills = document.getElementById('editWorkDrills').value;
+            workouts[idx].lift = document.getElementById('editWorkLift').value;
+            workouts[idx].xt = document.getElementById('editWorkXT').value;
+            workouts[idx].cool = document.getElementById('editWorkCool').value;
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            closeModal(); renderAll();
+        }
+
+        function deleteWorkout() {
+            const id = document.getElementById('edit-work-id').value;
+            workouts = workouts.filter(w => w.id !== id);
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            closeModal(); renderAll();
+        }
+
+        function saveWorkout() {
+            const checks = document.querySelectorAll('.run-check:checked');
+            const main = document.getElementById('workMain').value;
+            if(!checks.length || !main) return alert("Select athletes and enter a set");
+            
+            lastBatchIds = [];
+            checks.forEach(c => {
+                const w = {
+                    id: Math.random().toString(36).substr(2,9),
+                    date: selDate,
+                    name: c.value,
+                    main: main,
+                    warm: document.getElementById('workWarm').value,
+                    drills: document.getElementById('workDrills').value,
+                    lift: document.getElementById('workLift').value,
+                    xt: document.getElementById('workXT').value,
+                    cool: document.getElementById('workCool').value
+                };
+                workouts.unshift(w);
+                lastBatchIds.push(w.id);
+            });
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            renderAll();
+        }
+
+        function undoLastAssignment() {
+            if(!lastBatchIds.length) return alert("Nothing to undo");
+            workouts = workouts.filter(w => !lastBatchIds.includes(w.id));
+            lastBatchIds = [];
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            renderAll();
         }
 
         function renderAll() {
-            // Checklist for Builder
+            // Builder Updates
+            document.getElementById('aside-date').innerText = selDate;
+            document.getElementById('sideRoster').innerHTML = workouts.filter(w => w.date === selDate).map(w => `
+                <div onclick="openWorkEdit('${w.id}')" class="card p-2 border-l-4 border-blue-500 cursor-pointer hover:bg-blue-50">
+                    <div class="text-[10px] font-black uppercase">${w.name}</div>
+                    <div class="text-[11px] font-bold text-slate-600 truncate">${w.main}</div>
+                </div>`).join('');
+            
             document.getElementById('checklist').innerHTML = runners.map(r => `
                 <label class="flex items-center gap-2 p-2 bg-white border rounded text-[10px] font-black cursor-pointer">
                     <input type="checkbox" class="run-check" value="${r.name}"> ${r.name}
-                </label>
-            `).join('');
+                </label>`).join('');
 
-            // Roster Cards
-            document.getElementById('rosterList').innerHTML = runners.map(r => `
-                <div class="card flex flex-col justify-between border-l-4 border-blue-500">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <div class="font-black uppercase text-sm">${r.name}</div>
-                            <div class="text-[10px] text-blue-600 font-bold">${r.year || 'No Year'} • ${r.exp || '0'}yr Exp</div>
+            // Roster List
+            document.getElementById('roster-list').innerHTML = runners.map(r => `
+                <div class="card border-l-4 border-blue-500 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-black uppercase text-sm">${r.name}</div>
+                                <div class="text-[10px] text-blue-600 font-bold">${r.year || 'N/A'} • ${r.exp || '0'}yr Exp</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="editRunner('${r.id}')" class="p-1 hover:text-blue-600">✏️</button>
+                                <button onclick="removeRunner('${r.id}')" class="p-1 hover:text-red-600">🗑️</button>
+                            </div>
                         </div>
-                        <div class="flex gap-2">
-                            <button onclick="editRunner('${r.id}')" class="bg-slate-100 p-2 rounded hover:bg-blue-100 transition">✏️</button>
-                            <button onclick="removeRunner('${r.id}')" class="bg-slate-100 p-2 rounded hover:bg-red-100 transition">🗑️</button>
+                        <div class="flex flex-wrap gap-1 mt-3">
+                            ${Object.entries(r.pbs || {}).filter(([k,v]) => v).map(([k,v]) => `<span class="pb-tag">${k}: ${v}</span>`).join('')}
                         </div>
                     </div>
-                    <div class="flex flex-wrap gap-1 mt-2">
-                        ${Object.entries(r.pbs || {}).filter(([d, v]) => v).map(([dist, val]) => `
-                            <span class="pb-tag">${dist}m: ${val}</span>
-                        `).join('') || '<span class="text-[9px] italic text-slate-300">No PBs recorded</span>'}
-                    </div>
-                </div>
-            `).join('');
+                </div>`).join('');
+
+            // 14-Day Ribbon
+            const rib = document.getElementById('weekRibbon'); rib.innerHTML = '';
+            let s = new Date(); s.setDate(s.getDate() - 3);
+            for(let i=0; i<14; i++) {
+                let d = new Date(s); d.setDate(d.getDate()+i); let dStr = d.toISOString().split('T')[0];
+                const card = document.createElement('div'); card.onclick = () => { selDate = dStr; renderAll(); };
+                card.className = `min-w-[100px] p-3 rounded-xl border-2 cursor-pointer transition ${dStr === selDate ? 'border-blue-500 bg-blue-50' : 'bg-white'}`;
+                card.innerHTML = `<div class="text-[10px] font-black uppercase text-slate-400">${d.toLocaleDateString(undefined, {weekday:'short', day:'numeric'})}</div>`;
+                rib.appendChild(card);
+            }
+            renderCalendar();
         }
 
-        // Start on Roster view for verification
-        switchView('roster');
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid'); grid.innerHTML = '';
+            const y = new Date().getFullYear(), m = new Date().getMonth();
+            const last = new Date(y, m+1, 0).getDate();
+            for(let d=1; d<=last; d++) {
+                const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const daily = workouts.filter(w => w.date === dStr);
+                grid.innerHTML += `<div class="cal-day">
+                    <div class="text-[9px] font-black text-slate-300 mb-2">${d}</div>
+                    ${daily.map(w => `<button onclick="openWorkEdit('${w.id}')" class="workout-pill">${w.name}: ${w.main}</button>`).join('')}
+                </div>`;
+            }
+        }
+
+        function closeModal() { document.getElementById('editModal').classList.add('hidden'); }
+        function removeRunner(id) { if(confirm("Delete athlete?")) { runners = runners.filter(r => r.id !== id); localStorage.setItem('runners', JSON.stringify(runners)); renderAll(); } }
+        function toggleAll(cls) { const checks = document.querySelectorAll(cls); const all = Array.from(checks).every(c => c.checked); checks.forEach(c => c.checked = !all); }
+
+        renderAll();
     </script>
 </body>
 </html>
