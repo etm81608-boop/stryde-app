@@ -1,302 +1,423 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elite Coach Portal - Grouped Reports</title>
-    <style>
-        :root { --primary: #2563eb; --bg: #f1f5f9; --card: #ffffff; --text: #0f172a; --accent: #ef4444; --green: #16a34a; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 40px; }
-        
-        nav { background: #1e293b; padding: 1rem; display: flex; justify-content: center; gap: 10px; position: sticky; top: 0; z-index: 1000; }
-        nav button { background: #334155; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        nav button.active { background: var(--primary); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XC Team Manager</title>
 
-        .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; }
-        .card { background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .hidden { display: none; }
+<style>
+/* ===== GENERAL STYLING ===== */
+body {
+  font-family: Arial;
+  margin: 0;
+  background: #f4f6f8;
+}
 
-        input, textarea, select { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
-        
-        /* New Grouped Report Styles */
-        .report-section { margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: white; }
-        .date-header { background: #334155; color: white; padding: 12px 15px; font-weight: bold; font-size: 1.1rem; display: flex; justify-content: space-between; }
-        
-        .report-table { width: 100%; border-collapse: collapse; }
-        .report-table th { background: #f8fafc; color: #64748b; text-transform: uppercase; font-size: 0.7rem; font-weight: 700; border-bottom: 2px solid #e2e8f0; }
-        .report-table th, .report-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #f1f5f9; }
-        .athlete-name { font-weight: 700; color: var(--primary); width: 25%; }
-        .workout-title { font-weight: 600; color: #1e293b; }
+header {
+  background: #1e3a8a;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+}
 
-        /* Calendar */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #cbd5e1; border: 1px solid #cbd5e1; }
-        .calendar-header { background: #334155; color: white; padding: 10px; text-align: center; font-weight: bold; }
-        .calendar-day { background: white; min-height: 120px; padding: 8px; }
-        .cal-workout-block { background: #eff6ff; border-left: 3px solid var(--primary); padding: 4px 8px; margin-bottom: 4px; font-size: 0.7rem; border-radius: 2px; }
+/* ===== TAB NAVIGATION ===== */
+.tabs {
+  display: flex;
+  background: #ddd;
+}
 
-        button.primary { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-        button.success { background: var(--green); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-        .share-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 8px; margin-top: 15px; word-break: break-all; font-family: monospace; font-size: 0.8rem; }
-    </style>
+.tabs button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+.tabs .active {
+  background: white;
+  font-weight: bold;
+}
+
+/* ===== LAYOUT ===== */
+.container {
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+}
+
+input, select, textarea {
+  width: 100%;
+  margin: 6px 0 12px;
+  padding: 8px;
+}
+
+button {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
+}
+
+/* ===== CALENDAR ===== */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-day {
+  border: 1px solid #ccc;
+  padding: 6px;
+  margin: 4px;
+  min-height: 90px;
+  font-size: 12px;
+  overflow-y: auto;
+  cursor: pointer;
+}
+
+/* ===== REPORT TABLE ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th {
+  background: #1e3a8a;
+  color: white;
+  padding: 6px;
+}
+
+td {
+  padding: 6px;
+  text-align: center;
+  border: 1px solid #ccc;
+}
+</style>
 </head>
+
 <body>
 
-<nav>
-    <button onclick="showPage('calendar')" id="btn-calendar" class="active">Calendar</button>
-    <button onclick="showPage('workouts')" id="btn-workouts">Assign Workout</button>
-    <button onclick="showPage('reports')" id="btn-reports">Reports & Share</button>
-    <button onclick="showPage('athletes')" id="btn-athletes">Roster</button>
-</nav>
+<header>
+<h1>🏃 XC Team Manager</h1>
+</header>
+
+<!-- ===== TABS ===== -->
+<div class="tabs">
+<button onclick="showTab('roster')" class="active" id="rosterTab">Roster</button>
+<button onclick="showTab('workouts')" id="workoutsTab">Workouts</button>
+<button onclick="showTab('calendar')" id="calendarTab">Calendar</button>
+<button onclick="showTab('reports')" id="reportsTab">Reports</button>
+</div>
 
 <div class="container">
-    
-    <div id="page-calendar">
-        <div class="card">
-            <h2 id="monthLabel" style="text-align: center; margin-top: 0;"></h2>
-            <div class="calendar-grid" id="calendarGrid"></div>
-        </div>
-    </div>
 
-    <div id="page-workouts" class="hidden">
-        <div class="card">
-            <h2>Assign Workout</h2>
-            <input type="date" id="w-date">
-            <input type="text" id="w-title" placeholder="Workout Title">
-            <textarea id="w-desc" rows="3" placeholder="Instructions..."></textarea>
-            <label>Assign to Athletes:</label>
-            <div id="athlete-selector" style="max-height:150px; overflow-y:auto; border:1px solid #cbd5e1; border-radius:6px; padding:10px; margin-bottom:10px; background: #fff;"></div>
-            <button class="primary" onclick="saveWorkout()">Save Workout</button>
-        </div>
-    </div>
+<!-- ===== ROSTER ===== -->
+<div id="roster">
+<div class="card">
+<h2>Add Athlete</h2>
 
-    <div id="page-reports" class="hidden">
-        <div class="card">
-            <h2>Training Reports</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div>
-                    <label>Start Date</label>
-                    <input type="date" id="rep-start">
-                </div>
-                <div>
-                    <label>End Date</label>
-                    <input type="date" id="rep-end">
-                </div>
-            </div>
-            <button class="primary" onclick="generateReport()">Generate Grouped View</button>
-            <button class="success" onclick="downloadCSV()">Export to Excel (CSV)</button>
-            <button class="success" style="background:#0891b2" onclick="generateShareLink()">Generate Athlete Share Link</button>
-            
-            <div id="share-display" class="hidden">
-                <div class="share-box" id="link-url"></div>
-            </div>
-        </div>
+<input id="name" placeholder="Name">
 
-        <div id="report-container"></div>
-    </div>
+<select id="grade">
+<option>6th</option><option>7th</option><option>8th</option>
+<option>9th</option><option>10th</option><option>11th</option><option>12th</option>
+</select>
 
-    <div id="page-athletes" class="hidden">
-        <div class="card">
-            <h2>Add Athlete</h2>
-            <input type="text" id="a-name" placeholder="Name">
-            <input type="email" id="a-email" placeholder="Email">
-            <button class="primary" onclick="saveAthlete()">Add to Roster</button>
-        </div>
-        <div class="card">
-            <table style="width:100%; border-collapse: collapse;">
-                <tbody id="athleteBody"></tbody>
-            </table>
-        </div>
-    </div>
+<input id="years" type="number" placeholder="Years Running">
+<input id="events" placeholder="Events">
+
+<select id="seasons" multiple>
+<option>Cross Country</option>
+<option>Winter Track</option>
+<option>Spring Track</option>
+</select>
+
+<button onclick="addAthlete()">Save Athlete</button>
+</div>
+
+<div class="card">
+<h2>Roster</h2>
+<div id="athleteList"></div>
+</div>
+</div>
+
+<!-- ===== WORKOUTS ===== -->
+<div id="workouts" class="hidden">
+<div class="card">
+<h2>Create Workout</h2>
+
+<input id="wTitle" placeholder="Workout Title">
+<input id="wDate" type="date">
+<textarea id="wDesc" placeholder="Workout details"></textarea>
+
+<select id="assignTo"></select>
+
+<button onclick="addWorkout()">Save Workout</button>
+</div>
+
+<div class="card">
+<h2>All Workouts</h2>
+<div id="workoutList"></div>
+</div>
+</div>
+
+<!-- ===== CALENDAR ===== -->
+<div id="calendar" class="hidden">
+<div class="card">
+<h2>Calendar</h2>
+<input type="month" id="monthPicker" onchange="renderCalendar()">
+<div id="calendarGrid" class="calendar-grid"></div>
+</div>
+
+<div class="card">
+<h2>Selected Day</h2>
+<div id="dayDetails">Click a day</div>
+</div>
+</div>
+
+<!-- ===== REPORTS ===== -->
+<div id="reports" class="hidden">
+<div class="card">
+<h2>Generate Report</h2>
+
+<label>Date (optional)</label>
+<input type="date" id="reportDate">
+
+<label>Athlete</label>
+<select id="reportAthlete"></select>
+
+<button onclick="generateReport()">Generate</button>
+</div>
+
+<div class="card">
+<h2>Report Output</h2>
+<div id="reportOutput"></div>
+</div>
+</div>
 
 </div>
 
 <script>
-    let athletes = JSON.parse(localStorage.getItem('roster')) || [];
-    let workouts = JSON.parse(localStorage.getItem('trainingPlan')) || [];
 
-    function showPage(id) {
-        document.querySelectorAll('.container > div').forEach(p => p.classList.add('hidden'));
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        document.getElementById('page-' + id).classList.remove('hidden');
-        document.getElementById('btn-' + id).classList.add('active');
-        if(id === 'calendar') renderCalendar();
-        if(id === 'workouts') renderAthleteSelector();
-        if(id === 'athletes') renderRoster();
-    }
+/* ===== DATA STORAGE ===== */
+let athletes = JSON.parse(localStorage.getItem("athletes")) || [];
+let workouts = JSON.parse(localStorage.getItem("workouts")) || [];
 
-    // --- ATHLETE LOGIC ---
-    function saveAthlete() {
-        const name = document.getElementById('a-name').value;
-        const email = document.getElementById('a-email').value;
-        if(!name) return;
-        athletes.push({name, email});
-        localStorage.setItem('roster', JSON.stringify(athletes));
-        document.getElementById('a-name').value = '';
-        document.getElementById('a-email').value = '';
-        renderRoster();
-    }
+function save() {
+  localStorage.setItem("athletes", JSON.stringify(athletes));
+  localStorage.setItem("workouts", JSON.stringify(workouts));
+}
 
-    function renderRoster() {
-        const body = document.getElementById('athleteBody');
-        body.innerHTML = athletes.map((a, i) => `<tr style="border-bottom: 1px solid #eee"><td><strong>${a.name}</strong></td><td>${a.email}</td></tr>`).join('');
-    }
+/* ===== TAB SWITCHING ===== */
+function showTab(tab) {
+  ["roster","workouts","calendar","reports"].forEach(t=>{
+    document.getElementById(t).classList.add("hidden");
+    document.getElementById(t+"Tab").classList.remove("active");
+  });
 
-    function renderAthleteSelector() {
-        const box = document.getElementById('athlete-selector');
-        box.innerHTML = athletes.map(a => `<label style="display:block; margin-bottom:5px;"><input type="checkbox" class="a-check" value="${a.name}"> ${a.name}</label>`).join('');
-    }
+  document.getElementById(tab).classList.remove("hidden");
+  document.getElementById(tab+"Tab").classList.add("active");
+}
 
-    // --- WORKOUT LOGIC ---
-    function saveWorkout() {
-        const selected = Array.from(document.querySelectorAll('.a-check:checked')).map(c => c.value);
-        const data = {
-            date: document.getElementById('w-date').value,
-            title: document.getElementById('w-title').value,
-            desc: document.getElementById('w-desc').value,
-            assigned: selected
-        };
-        if(!data.date || !data.title) return alert("Date and Title required");
-        workouts.push(data);
-        localStorage.setItem('trainingPlan', JSON.stringify(workouts));
-        showPage('calendar');
-    }
+/* ===== ATHLETES ===== */
+function addAthlete() {
+  const seasons = [...document.getElementById("seasons").selectedOptions].map(o=>o.value);
 
-    // --- NEW GROUPED REPORT LOGIC ---
-    function generateReport() {
-        const start = document.getElementById('rep-start').value;
-        const end = document.getElementById('rep-end').value;
-        if(!start || !end) return alert("Select a date range");
+  athletes.push({
+    name: name.value,
+    grade: grade.value,
+    years: years.value,
+    events: events.value,
+    seasons
+  });
 
-        const container = document.getElementById('report-container');
-        container.innerHTML = '';
-        
-        // Group workouts by date
-        const filtered = workouts.filter(w => w.date >= start && w.date <= end).sort((a,b) => a.date.localeCompare(b.date));
-        const grouped = {};
-        
-        filtered.forEach(w => {
-            if (!grouped[w.date]) grouped[w.date] = [];
-            grouped[w.date].push(w);
-        });
+  save();
+  renderAthletes();
+  updateDropdowns();
+}
 
-        for (const date in grouped) {
-            let section = `
-                <div class="report-section">
-                    <div class="date-header">📅 ${new Date(date).toDateString()}</div>
-                    <table class="report-table">
-                        <thead><tr><th>Athlete</th><th>Workout</th><th>Instructions</th></tr></thead>
-                        <tbody>`;
-            
-            grouped[date].forEach(w => {
-                w.assigned.forEach(name => {
-                    section += `
-                        <tr>
-                            <td class="athlete-name">${name}</td>
-                            <td class="workout-title">${w.title}</td>
-                            <td><small>${w.desc}</small></td>
-                        </tr>`;
-                });
-            });
+function renderAthletes() {
+  athleteList.innerHTML = athletes.map((a,i)=>`
+    <div class="card">
+      <b>${a.name}</b><br>
+      ${a.grade} | ${a.events}<br>
+      <button onclick="deleteAthlete(${i})">Delete</button>
+    </div>
+  `).join("");
+}
 
-            section += `</tbody></table></div>`;
-            container.innerHTML += section;
-        }
-    }
+function deleteAthlete(i){
+  athletes.splice(i,1);
+  save();
+  renderAthletes();
+  updateDropdowns();
+}
 
-    function downloadCSV() {
-        let csv = "Date,Athlete,Workout,Instructions\n";
-        workouts.forEach(w => {
-            w.assigned.forEach(name => {
-                csv += `"${w.date}","${name}","${w.title}","${w.desc.replace(/"/g, '""')}"\n`;
-            });
-        });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.setAttribute('hidden', '');
-        a.setAttribute('href', url);
-        a.setAttribute('download', 'coach_report.csv');
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    }
+/* ===== WORKOUTS ===== */
+function addWorkout(){
+  workouts.push({
+    title: wTitle.value,
+    date: wDate.value,
+    desc: wDesc.value,
+    assign: assignTo.value
+  });
 
-    function generateShareLink() {
-        const start = document.getElementById('rep-start').value;
-        const end = document.getElementById('rep-end').value;
-        const filtered = workouts.filter(w => w.date >= start && w.date <= end);
-        const dataString = btoa(unescape(encodeURIComponent(JSON.stringify(filtered))));
-        const shareUrl = window.location.origin + window.location.pathname + "#view=" + dataString;
-        document.getElementById('link-url').innerText = shareUrl;
-        document.getElementById('share-display').classList.remove('hidden');
-    }
+  save();
+  renderWorkouts();
+}
 
-    window.onload = function() {
-        if(window.location.hash.startsWith("#view=")) {
-            const data = JSON.parse(decodeURIComponent(escape(atob(window.location.hash.split("=")[1]))));
-            document.body.innerHTML = `
-                <div class="container">
-                    <h1>Athlete Training Schedule</h1>
-                    ${data.map(w => `
-                        <div class="card">
-                            <h3 style="color:var(--primary)">${w.date} - ${w.title}</h3>
-                            <p>${w.desc}</p>
-                            <small>Assigned to: ${w.assigned.join(', ')}</small>
-                        </div>
-                    `).join('')}
-                    <button class="primary" onclick="window.location.hash=''; location.reload();">Close Schedule</button>
-                </div>`;
-        }
-    }
+function renderWorkouts(){
+  workoutList.innerHTML = workouts.map((w,i)=>`
+    <div class="card">
+      <b>${w.title}</b> (${w.date})<br>
+      ${w.desc}<br>
+      Assigned: ${getAthleteName(w.assign)}
+      <br><button onclick="editWorkout(${i})">Edit</button>
+    </div>
+  `).join("");
+}
 
-    function renderCalendar() {
+function editWorkout(i){
+  const w = workouts[i];
+
+  wTitle.value = w.title;
+  wDate.value = w.date;
+  wDesc.value = w.desc;
+  assignTo.value = w.assign;
+
+  workouts.splice(i,1);
+  save();
+  renderWorkouts();
+}
+
+/* ===== CALENDAR WITH ATHLETES DISPLAYED ===== */
+function renderCalendar(){
 
   const month = monthPicker.value;
-  if (!month) return;
+  if(!month) return;
 
-  const [y, m] = month.split("-");
-  const days = new Date(y, m, 0).getDate();
+  const [y,m] = month.split("-");
+  const days = new Date(y,m,0).getDate();
 
-  let html = "";
+  let html="";
 
-  // Loop through each day of the month
-  for (let d = 1; d <= days; d++) {
+  for(let d=1; d<=days; d++){
 
     let date = `${month}-${String(d).padStart(2,'0')}`;
 
-    // Find workouts for this specific day
-    let dayWorkouts = workouts.filter(w => w.date === date);
+    let dayWorkouts = workouts.filter(w=>w.date===date);
 
-    // Start building the calendar cell
-    let cellContent = `<b>${d}</b><br>`;
+    let content = `<b>${d}</b><br>`;
 
-    // Add each workout into the cell
-    dayWorkouts.forEach(w => {
-      cellContent += `
-        <div style="font-size:12px; margin-top:4px;">
+    dayWorkouts.forEach(w=>{
+      content += `
+        <div>
           <b>${w.title}</b><br>
           ${getAthleteName(w.assign)}
         </div>
       `;
     });
 
-    // Create the calendar box
     html += `
       <div class="calendar-day" onclick="showDay('${date}')">
-        ${cellContent}
+        ${content}
       </div>
     `;
   }
 
-  // Render calendar
   calendarGrid.innerHTML = html;
 }
 
-        }
-    }
+function showDay(date){
+  let dayWorkouts = workouts.filter(w=>w.date===date);
 
-    showPage('calendar');
+  dayDetails.innerHTML = dayWorkouts.map((w,i)=>`
+    <div class="card">
+      <b>${w.title}</b><br>
+      ${w.desc}<br>
+      Assigned: ${getAthleteName(w.assign)}
+      <br><button onclick="editWorkout(${i})">Edit</button>
+    </div>
+  `).join("") || "No workouts";
+}
+
+/* ===== REPORT TABLE (DATES AS COLUMNS) ===== */
+function generateReport(){
+
+  const selectedDate = reportDate.value;
+  const selectedAthlete = reportAthlete.value;
+
+  let filtered = workouts.filter(w=>{
+    return (!selectedDate || w.date===selectedDate) &&
+           (selectedAthlete==="all" || w.assign===selectedAthlete || w.assign==="all");
+  });
+
+  if(filtered.length===0){
+    reportOutput.innerHTML="No results";
+    return;
+  }
+
+  let dates = [...new Set(filtered.map(w=>w.date))];
+
+  let athleteIndexes = selectedAthlete==="all"
+    ? athletes.map((_,i)=>i)
+    : [parseInt(selectedAthlete)];
+
+  let html = `<table><tr><th>Athlete</th>`;
+
+  dates.forEach(d=> html+=`<th>${d}</th>`);
+  html += `</tr>`;
+
+  athleteIndexes.forEach(i=>{
+    html += `<tr><td><b>${athletes[i]?.name}</b></td>`;
+
+    dates.forEach(d=>{
+      let cell = filtered
+        .filter(w=>w.date===d && (w.assign==i || w.assign==="all"))
+        .map(w=>w.title)
+        .join("<br>");
+
+      html += `<td>${cell || "-"}</td>`;
+    });
+
+    html += `</tr>`;
+  });
+
+  html += `</table>`;
+
+  reportOutput.innerHTML = html;
+}
+
+/* ===== HELPERS ===== */
+function updateDropdowns(){
+  assignTo.innerHTML='<option value="all">All Athletes</option>';
+  reportAthlete.innerHTML='<option value="all">All Athletes</option>';
+
+  athletes.forEach((a,i)=>{
+    assignTo.innerHTML+=`<option value="${i}">${a.name}</option>`;
+    reportAthlete.innerHTML+=`<option value="${i}">${a.name}</option>`;
+  });
+}
+
+function getAthleteName(i){
+  return i==="all" ? "All Athletes" : athletes[i]?.name || "Unknown";
+}
+
+/* ===== INITIAL LOAD ===== */
+renderAthletes();
+renderWorkouts();
+updateDropdowns();
+
 </script>
+
 </body>
 </html>
+
      
