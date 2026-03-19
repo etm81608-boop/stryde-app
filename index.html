@@ -2,19 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Stryde Elite - Pro Command</title>
+    <title>Stryde Elite - Director Command</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .hidden { display: none !important; }
         .active-tab { border-bottom: 4px solid #2563eb; color: #2563eb; }
         .card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .event-input { border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px; font-size: 11px; font-weight: bold; width: 100%; text-align: center; }
-        .label-xs { font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+        .label-xs { font-size: 9px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; display: block; }
         
         @media print {
             nav, aside, .no-print, button { display: none !important; }
             .print-area { display: block !important; width: 100% !important; }
-            .print-card { page-break-inside: avoid; border-bottom: 2px solid #000; margin-bottom: 20px; padding-bottom: 10px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+            th, td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 10pt; }
+            th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
+            .page-break { page-break-after: always; }
         }
     </style>
 </head>
@@ -24,8 +26,7 @@
         <div class="p-4 flex justify-between items-center border-b border-slate-800">
             <h1 class="font-black italic tracking-tighter text-xl text-blue-400">STRYDE ELITE PRO</h1>
             <div class="flex gap-3 items-center">
-                <button onclick="undoLastAction()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase transition border border-slate-600">Undo ↩️</button>
-                <button onclick="emailAllWorkouts()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase shadow-lg transition">Email Blast ✉️</button>
+                <button onclick="undoLastAction()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase transition border border-slate-600">Undo Last ↩️</button>
                 <div class="flex bg-slate-800 rounded-lg p-1 ml-2">
                     <button id="nav-builder" onclick="switchView('builder')" class="text-[10px] font-black uppercase px-3 py-2 rounded-md active-tab">Builder</button>
                     <button id="nav-library" onclick="switchView('library')" class="text-[10px] font-black uppercase px-3 py-2 rounded-md">Library</button>
@@ -39,8 +40,11 @@
 
     <main class="p-6 max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
         
-        <aside class="w-full lg:w-80 shrink-0 no-print">
-            <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Selected Day's Groups</h2>
+        <aside class="w-full lg:w-96 shrink-0 no-print">
+            <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest flex justify-between">
+                <span>Daily Squad Plans</span>
+                <span id="aside-date" class="text-blue-500"></span>
+            </h2>
             <div id="sideRoster" class="space-y-4"></div>
         </aside>
 
@@ -49,79 +53,49 @@
                 <div class="card border-t-4 border-blue-600">
                     <div class="flex justify-between items-end mb-4">
                         <h2 class="text-[10px] font-black text-slate-400 uppercase">1. Select Runners</h2>
-                        <button onclick="toggleAllCheckboxes('.run-check')" class="text-[9px] font-bold text-blue-600 hover:underline">SELECT ALL</button>
+                        <button onclick="toggleAllCheckboxes('.run-check')" class="text-[9px] font-bold text-blue-600">TOGGLE ALL</button>
                     </div>
                     <div id="checklist" class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8 max-h-48 overflow-y-auto p-3 bg-slate-50 rounded-xl border"></div>
                     
                     <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4">2. Training Plan</h2>
                     <div class="grid grid-cols-1 gap-4">
                         <div class="grid grid-cols-2 gap-4">
-                            <div><span class="label-xs text-slate-400">Warmup</span><input type="text" id="workWarm" class="w-full p-3 border rounded-xl text-sm font-semibold"></div>
-                            <div><span class="label-xs text-orange-500">Drills</span><input type="text" id="workDrills" class="w-full p-3 border rounded-xl text-sm font-semibold"></div>
+                            <div><span class="label-xs">Warmup</span><input type="text" id="workWarm" class="w-full p-3 border rounded-xl text-sm"></div>
+                            <div><span class="label-xs text-orange-500">Drills</span><input type="text" id="workDrills" class="w-full p-3 border rounded-xl text-sm"></div>
                         </div>
-                        <div><span class="label-xs text-blue-600">Main Set</span><input type="text" id="workMain" class="w-full p-4 border-2 border-blue-100 rounded-xl font-bold text-lg outline-none focus:border-blue-500"></div>
+                        <div><span class="label-xs text-blue-600 font-bold">Main Set</span><input type="text" id="workMain" class="w-full p-4 border-2 border-blue-100 rounded-xl font-bold text-lg focus:border-blue-500 outline-none"></div>
                         <div class="grid grid-cols-3 gap-4">
-                            <div><span class="label-xs text-purple-500">Lift</span><input type="text" id="workLift" class="w-full p-3 border rounded-xl text-sm font-semibold"></div>
-                            <div><span class="label-xs text-cyan-600">Cross Train</span><input type="text" id="workXT" class="w-full p-3 border rounded-xl text-sm font-semibold" placeholder="Bike/Swim/Ellip"></div>
-                            <div><span class="label-xs text-emerald-500">Cooldown</span><input type="text" id="workCool" class="w-full p-3 border rounded-xl text-sm font-semibold"></div>
+                            <div><span class="label-xs text-purple-500">Lift</span><input type="text" id="workLift" class="w-full p-3 border rounded-xl text-sm"></div>
+                            <div><span class="label-xs text-cyan-600">Cross Train</span><input type="text" id="workXT" class="w-full p-3 border rounded-xl text-sm"></div>
+                            <div><span class="label-xs text-emerald-500">Cooldown</span><input type="text" id="workCool" class="w-full p-3 border rounded-xl text-sm"></div>
                         </div>
                     </div>
-                    <button onclick="saveWorkout()" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl mt-8 shadow-lg uppercase tracking-widest text-xs">Assign to Group</button>
+                    <button onclick="saveWorkout()" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl mt-8 shadow-lg uppercase text-xs tracking-widest">Post Workout</button>
                 </div>
-            </div>
-
-            <div id="view-library" class="hidden space-y-6">
-                <div class="card bg-purple-50 border-purple-200">
-                    <h2 class="font-black text-purple-700 mb-4 uppercase italic text-sm">Library Template</h2>
-                    <div class="grid grid-cols-1 gap-4">
-                        <input type="text" id="lib-title" placeholder="Template Title" class="w-full p-3 border rounded-xl font-black text-sm">
-                        <input type="text" id="lib-main" placeholder="Main Set" class="w-full p-3 border-2 border-purple-200 rounded-xl font-bold">
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="lib-lift" placeholder="Lift" class="p-2 border rounded-lg text-xs">
-                            <input type="text" id="lib-xt" placeholder="Cross Train" class="p-2 border rounded-lg text-xs">
-                        </div>
-                    </div>
-                    <button onclick="saveToLibrary()" class="w-full bg-purple-600 text-white font-black py-3 rounded-xl mt-4 text-[10px] uppercase">Save Template</button>
-                </div>
-                <div id="libraryList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            </div>
-
-            <div id="view-roster" class="hidden space-y-6">
-                <div class="card bg-slate-900 text-white border-none shadow-2xl">
-                    <h2 id="form-title" class="font-black text-blue-400 mb-6 uppercase italic text-sm">Athlete Intake</h2>
-                    <input type="hidden" id="edit-id">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                        <div class="md:col-span-2"><span class="label-xs">Full Name</span><input type="text" id="run-name" class="w-full p-3 bg-slate-800 border-none rounded-xl text-white font-bold"></div>
-                        <div><span class="label-xs">Grade</span><select id="run-grade" class="w-full p-3 bg-slate-800 border-none rounded-xl text-white font-bold"><option>9th</option><option>10th</option><option>11th</option><option>12th</option></select></div>
-                        <div><span class="label-xs">Years</span><input type="number" id="run-years" class="w-full p-3 bg-slate-800 border-none rounded-xl text-white font-bold"></div>
-                    </div>
-                    <div><span class="label-xs">Email</span><input type="email" id="run-email" class="w-full p-3 bg-slate-800 border-none rounded-xl text-white mb-6"></div>
-                    <div class="flex gap-3 mt-8">
-                        <button onclick="addRunner()" id="save-btn" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-xs uppercase">Save Athlete</button>
-                    </div>
-                </div>
-                <div id="rosterList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
             <div id="view-reports" class="hidden space-y-6">
                 <div class="card border-t-4 border-emerald-500 no-print">
-                    <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4">Export Schedule</h2>
+                    <h2 class="text-[10px] font-black text-slate-400 uppercase mb-4">Table Generator</h2>
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <input type="date" id="rep-start" class="p-3 border rounded-xl font-bold">
                         <input type="date" id="rep-end" class="p-3 border rounded-xl font-bold">
                     </div>
                     <div id="rep-checklist" class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 p-4 bg-slate-50 rounded-xl border"></div>
-                    <button onclick="generateReport()" class="w-full bg-emerald-600 text-white font-black py-4 rounded-xl uppercase text-xs">View Printable Schedule</button>
+                    <button onclick="generateReport()" class="w-full bg-emerald-600 text-white font-black py-4 rounded-xl uppercase text-xs">Generate Tables</button>
                 </div>
-                <div id="print-area" class="print-area"></div>
-                <button onclick="window.print()" id="print-btn" class="hidden w-full bg-slate-900 text-white py-3 rounded-xl font-black text-xs no-print mb-10">Download / Print Schedule</button>
+                <div id="print-area" class="print-area overflow-x-auto bg-white p-4 rounded-xl shadow-inner"></div>
+                <button onclick="window.print()" id="print-btn" class="hidden w-full bg-slate-900 text-white py-3 rounded-xl font-black text-xs no-print">Print All Tables</button>
             </div>
+
+            <div id="view-library" class="hidden space-y-6"><div id="libraryList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div>
+            <div id="view-roster" class="hidden space-y-6"><div id="rosterList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div>
         </section>
     </main>
 
     <script>
         let selDate = new Date().toISOString().split('T')[0];
-        let lastActionCount = 0;
+        let lastActionTimestamp = null;
 
         function switchView(view) {
             ['builder','library','roster','reports'].forEach(v => {
@@ -134,13 +108,16 @@
         function saveWorkout() {
             const checked = document.querySelectorAll('.run-check:checked');
             const main = document.getElementById('workMain').value;
-            if(!checked.length || !main) return alert("Select runners & Main Set.");
+            if(!checked.length || !main) return alert("Missing Runners or Main Set");
             
             let workouts = JSON.parse(localStorage.getItem('workouts') || "[]");
-            lastActionCount = checked.length;
+            const ts = Date.now();
+            lastActionTimestamp = ts;
 
             checked.forEach(box => {
                 workouts.unshift({
+                    id: Math.random().toString(36).substr(2, 9),
+                    batch: ts,
                     date: selDate,
                     name: box.value,
                     main,
@@ -156,34 +133,20 @@
             renderAll();
         }
 
-        function undoLastAction() {
-            if(lastActionCount === 0) return alert("Nothing to undo.");
+        function deleteWorkout(id) {
             let workouts = JSON.parse(localStorage.getItem('workouts') || "[]");
-            workouts.splice(0, lastActionCount);
+            workouts = workouts.filter(w => w.id !== id);
             localStorage.setItem('workouts', JSON.stringify(workouts));
-            lastActionCount = 0;
             renderAll();
         }
 
-        function useLibrary(libId) {
-            const lib = JSON.parse(localStorage.getItem('library') || "[]");
-            const w = lib.find(l => l.id === libId);
-            document.getElementById('workMain').value = w.main || '';
-            document.getElementById('workLift').value = w.lift || '';
-            document.getElementById('workXT').value = w.xt || '';
-            switchView('builder');
-        }
-
-        function emailAllWorkouts() {
-            const workouts = JSON.parse(localStorage.getItem('workouts') || "[]").filter(w => w.date === selDate);
-            const runners = JSON.parse(localStorage.getItem('runners') || "[]");
-            workouts.forEach(w => {
-                const r = runners.find(item => item.name === w.name);
-                if(r?.email) {
-                    const body = `Plan for ${selDate}:\n\nMAIN: ${w.main}\nXT: ${w.xt || 'None'}\nLift: ${w.lift || 'None'}`;
-                    window.open(`mailto:${r.email}?subject=Workout&body=${encodeURIComponent(body)}`);
-                }
-            });
+        function undoLastAction() {
+            if(!lastActionTimestamp) return alert("No recent action to undo.");
+            let workouts = JSON.parse(localStorage.getItem('workouts') || "[]");
+            workouts = workouts.filter(w => w.batch !== lastActionTimestamp);
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            lastActionTimestamp = null;
+            renderAll();
         }
 
         function generateReport() {
@@ -193,17 +156,30 @@
             const workouts = JSON.parse(localStorage.getItem('workouts') || "[]");
             if(!start || !end || !selected.length) return alert("Fill all filters");
 
-            let html = `<h1 class="text-2xl font-black mb-8 border-b-4 border-black pb-2 uppercase tracking-tighter">Squad Schedule: ${start} - ${end}</h1>`;
+            let html = '';
             selected.forEach(rn => {
-                html += `<div class="print-card mb-10"><h2 class="text-xl font-black uppercase bg-slate-100 p-2 mb-4">${rn}</h2>`;
-                workouts.filter(w => w.name === rn && w.date >= start && w.date <= end).sort((a,b) => a.date.localeCompare(b.date)).forEach(w => {
-                    html += `<div class="mb-4 border-b pb-2">
-                                <div class="text-[10px] font-black text-slate-500">${w.date}</div>
-                                <div class="text-md font-bold uppercase">${w.main}</div>
-                                <div class="text-xs text-slate-700">${w.xt ? '<b>Cross:</b> '+w.xt : ''} ${w.lift ? '| <b>Lift:</b> '+w.lift : ''}</div>
-                             </div>`;
+                const runnerWorkouts = workouts.filter(w => w.name === rn && w.date >= start && w.date <= end).sort((a,b) => a.date.localeCompare(b.date));
+                html += `<div class="page-break mb-12">
+                            <h2 class="text-xl font-black uppercase mb-4 border-b-4 border-black inline-block">${rn}</h2>
+                            <table class="w-full text-left border-collapse border border-slate-300">
+                                <thead>
+                                    <tr class="bg-slate-100 font-black text-[10px] uppercase">
+                                        <th class="border p-2 w-24">Date</th>
+                                        <th class="border p-2">Main Workout</th>
+                                        <th class="border p-2">XT / Lift</th>
+                                        <th class="border p-2">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                runnerWorkouts.forEach(w => {
+                    html += `<tr class="text-sm">
+                                <td class="border p-2 font-bold whitespace-nowrap">${w.date}</td>
+                                <td class="border p-2 font-black">${w.main}</td>
+                                <td class="border p-2">${w.xt || ''} ${w.xt && w.lift ? '/' : ''} ${w.lift || ''}</td>
+                                <td class="border p-2 text-xs text-slate-500">${w.warm ? 'W: '+w.warm : ''} ${w.drills ? 'D: '+w.drills : ''}</td>
+                             </tr>`;
                 });
-                html += `</div>`;
+                html += `</tbody></table></div>`;
             });
             document.getElementById('print-area').innerHTML = html;
             document.getElementById('print-btn').classList.remove('hidden');
@@ -212,44 +188,43 @@
         function renderAll() {
             const runners = JSON.parse(localStorage.getItem('runners') || "[]");
             const workouts = JSON.parse(localStorage.getItem('workouts') || "[]");
-            const lib = JSON.parse(localStorage.getItem('library') || "[]");
+            const today = workouts.filter(w => w.date === selDate);
+            
+            document.getElementById('aside-date').innerText = selDate;
+            
+            // SIDEBAR WITH ALL FIELDS
+            document.getElementById('sideRoster').innerHTML = today.map(w => `
+                <div class="p-4 bg-white border-2 border-slate-100 rounded-2xl shadow-sm relative group">
+                    <button onclick="deleteWorkout('${w.id}')" class="absolute top-3 right-3 text-slate-300 hover:text-red-500 no-print">🗑️</button>
+                    <div class="text-[11px] font-black text-blue-600 uppercase mb-2 tracking-tighter">${w.name}</div>
+                    <div class="text-md font-black leading-tight mb-2 border-b pb-1">${w.main}</div>
+                    <div class="grid grid-cols-1 gap-1 text-[10px] text-slate-600 font-medium">
+                        ${w.warm ? `<div><b class="text-slate-400">WARM:</b> ${w.warm}</div>` : ''}
+                        ${w.drills ? `<div><b class="text-orange-400">DRILL:</b> ${w.drills}</div>` : ''}
+                        ${w.xt ? `<div><b class="text-cyan-600">XT:</b> ${w.xt}</div>` : ''}
+                        ${w.lift ? `<div><b class="text-purple-500">LIFT:</b> ${w.lift}</div>` : ''}
+                        ${w.cool ? `<div><b class="text-emerald-500">COOL:</b> ${w.cool}</div>` : ''}
+                    </div>
+                </div>`).join('') || '<div class="text-center py-10 text-slate-400 italic text-sm border-2 border-dashed rounded-2xl">No runners assigned for today.</div>';
 
-            document.getElementById('rosterList').innerHTML = runners.map(r => `<div class="card mb-2 flex justify-between"><b>${r.name}</b><button onclick="editAthlete(${r.id})" class="text-[9px] font-black uppercase">Edit</button></div>`).join('');
+            // BUILDER CHECKLISTS
             document.getElementById('checklist').innerHTML = runners.map(r => `<label class="flex items-center gap-2 p-2 bg-white border rounded text-[10px] font-black cursor-pointer"><input type="checkbox" class="run-check" value="${r.name}"> ${r.name}</label>`).join('');
             document.getElementById('rep-checklist').innerHTML = runners.map(r => `<label class="flex items-center gap-2 p-2 bg-white border rounded text-[10px] font-black cursor-pointer"><input type="checkbox" class="rep-check" value="${r.name}"> ${r.name}</label>`).join('');
-            document.getElementById('libraryList').innerHTML = lib.map(l => `<div class="card mb-2 flex justify-between items-center"><span class="font-black text-xs uppercase">${l.title}</span><button onclick="useLibrary(${l.id})" class="bg-purple-100 p-2 rounded text-[9px] font-black">LOAD</button></div>`).join('');
 
-            const today = workouts.filter(w => w.date === selDate);
-            document.getElementById('sideRoster').innerHTML = today.map(w => `<div class="p-4 bg-white border rounded-xl border-l-4 border-blue-500 shadow-sm"><div class="text-[10px] font-black text-blue-600 uppercase mb-1">${w.name}</div><div class="text-[11px] font-bold">${w.main}</div></div>`).join('') || '<p class="text-xs italic text-slate-400">No activity.</p>';
-
+            // DATE RIBBON
             const ribbon = document.getElementById('weekRibbon'); ribbon.innerHTML = '';
             let start = new Date(); start.setDate(start.getDate() - 3);
             for(let i=0; i<7; i++) {
                 let d = new Date(start); d.setDate(d.getDate() + i);
                 let dStr = d.toISOString().split('T')[0];
                 const card = document.createElement('div');
-                card.className = `min-w-[100px] p-2 rounded-xl border-2 cursor-pointer bg-white ${dStr === selDate ? 'border-blue-500 shadow-md' : 'border-slate-100'}`;
+                card.className = `min-w-[100px] p-3 rounded-xl border-2 cursor-pointer bg-white ${dStr === selDate ? 'border-blue-500 shadow-md ring-2 ring-blue-50' : 'border-slate-100'}`;
                 card.onclick = () => { selDate = dStr; renderAll(); };
-                card.innerHTML = `<div class="text-[8px] font-black text-slate-400 uppercase">${d.toLocaleDateString(undefined, {weekday:'short', day:'numeric'})}</div>`;
+                card.innerHTML = `<div class="text-[9px] font-black text-slate-400 uppercase">${d.toLocaleDateString(undefined, {weekday:'short', day:'numeric'})}</div>`;
                 ribbon.appendChild(card);
             }
         }
 
-        function saveToLibrary() {
-            let lib = JSON.parse(localStorage.getItem('library') || "[]");
-            lib.push({ id: Date.now(), title: document.getElementById('lib-title').value, main: document.getElementById('lib-main').value, lift: document.getElementById('lib-lift').value, xt: document.getElementById('lib-xt').value });
-            localStorage.setItem('library', JSON.stringify(lib));
-            renderAll();
-        }
-
-        function addRunner() {
-            let r = JSON.parse(localStorage.getItem('runners') || "[]");
-            r.push({ id: Date.now(), name: document.getElementById('run-name').value, email: document.getElementById('run-email').value, grade: document.getElementById('run-grade').value, years: document.getElementById('run-years').value });
-            localStorage.setItem('runners', JSON.stringify(r));
-            renderAll();
-        }
-
-        function toggleAllCheckboxes(cls) { const boxes = document.querySelectorAll(cls); const all = Array.from(boxes).every(b => b.checked); boxes.forEach(b => b.checked = !all); }
         renderAll();
     </script>
 </body>
