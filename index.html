@@ -2,95 +2,89 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Stryde Elite - Master Suite</title>
+    <title>Stryde Elite - Roster Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .hidden { display: none !important; }
         .active-tab { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: 900; }
         .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .label-xs { font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin-bottom: 4px; display: block; }
-        .pb-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .pb-tag { background: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-size: 9px; font-weight: bold; color: #475569; border: 1px solid #e2e8f0; }
-        input::placeholder { color: #475569; opacity: 0.5; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-900">
 
-    <nav class="bg-slate-900 text-white sticky top-0 z-50 shadow-xl no-print">
+    <nav class="bg-slate-900 text-white sticky top-0 z-50 shadow-xl">
         <div class="p-4 flex justify-between items-center">
             <h1 class="font-black italic text-xl text-blue-400 uppercase tracking-tighter">Stryde Elite</h1>
-            <div class="flex bg-slate-800 rounded-lg p-1 ml-2">
-                <button id="nav-builder" onclick="switchView('builder')" class="text-[10px] font-bold uppercase px-3 py-2 rounded-md active-tab">Builder</button>
-                <button id="nav-roster" onclick="switchView('roster')" class="text-[10px] font-bold uppercase px-3 py-2 rounded-md">Roster</button>
+            <div class="flex bg-slate-800 rounded-lg p-1">
+                <button id="nav-builder" onclick="switchView('builder')" class="text-[10px] font-bold uppercase px-4 py-2 rounded-md">Builder</button>
+                <button id="nav-roster" onclick="switchView('roster')" class="text-[10px] font-bold uppercase px-4 py-2 rounded-md active-tab">Roster</button>
             </div>
         </div>
-        <div class="bg-white p-3 border-b flex gap-3 overflow-x-auto shadow-inner" id="weekRibbon"></div>
     </nav>
 
     <main class="p-6 max-w-7xl mx-auto">
-        
-        <div id="view-roster" class="hidden space-y-6">
+        <div id="view-roster" class="space-y-6">
             <div class="card bg-slate-900 text-white border-t-4 border-blue-500">
-                <h3 id="form-title" class="label-xs text-blue-400 mb-4">Add New Athlete</h3>
+                <h3 id="form-header" class="label-xs text-blue-400 mb-4">Add New Athlete</h3>
+                
                 <input type="hidden" id="edit-runner-id" value="">
                 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <div><label class="label-xs text-slate-500">Full Name</label><input type="text" id="run-name" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-white outline-none focus:border-blue-500"></div>
+                    <div><label class="label-xs text-slate-500">Full Name</label><input type="text" id="run-name" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-white outline-none focus:ring-1 ring-blue-500"></div>
                     <div><label class="label-xs text-slate-500">Gmail</label><input type="email" id="run-email" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-white outline-none"></div>
-                    <div><label class="label-xs text-slate-500">Year in School</label><input type="text" id="run-year" placeholder="Junior" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-white outline-none"></div>
-                    <div><label class="label-xs text-slate-500">Experience (Yrs)</label><input type="number" id="run-exp" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-white outline-none"></div>
+                    <div><label class="label-xs text-slate-500">Year</label><input type="text" id="run-year" placeholder="Sr." class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-white outline-none"></div>
+                    <div><label class="label-xs text-slate-500">Exp</label><input type="number" id="run-exp" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-white outline-none"></div>
                 </div>
 
                 <div class="label-xs text-slate-500 mb-2">Personal Bests</div>
-                <div class="pb-grid mb-6">
-                    <input type="text" id="pb-100" placeholder="100m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-200" placeholder="200m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-400" placeholder="400m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-800" placeholder="800m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-1600" placeholder="1600m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-3000" placeholder="3000m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-3200" placeholder="3200m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
-                    <input type="text" id="pb-5000" placeholder="5000m" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white">
+                <div class="grid grid-cols-4 md:grid-cols-8 gap-2 mb-6">
+                    <input type="text" id="pb-100" placeholder="100" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white outline-none">
+                    <input type="text" id="pb-200" placeholder="200" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white outline-none">
+                    <input type="text" id="pb-400" placeholder="400" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white outline-none">
+                    <input type="text" id="pb-800" placeholder="800" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white outline-none">
+                    <input type="text" id="pb-1600" placeholder="1600" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white outline-none">
+                    <input type="text" id="pb-3200" placeholder="3200" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white outline-none">
+                    <input type="text" id="pb-5k" placeholder="5k" class="p-2 bg-slate-800 rounded border border-slate-700 text-xs text-white outline-none">
                 </div>
 
                 <div class="flex gap-2">
-                    <button id="add-runner-btn" onclick="addRunner()" class="bg-blue-600 hover:bg-blue-500 flex-1 p-3 rounded font-black uppercase text-xs transition">Save Athlete Profile</button>
-                    <button onclick="resetRosterForm()" class="bg-slate-700 p-3 rounded font-black uppercase text-xs">Clear</button>
+                    <button id="save-btn" onclick="saveRunner()" class="flex-1 bg-blue-600 hover:bg-blue-500 p-3 rounded font-black uppercase text-xs transition">Save Athlete</button>
+                    <button onclick="clearForm()" class="bg-slate-700 p-3 rounded font-black uppercase text-xs">Clear</button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="rosterList"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="roster-grid"></div>
         </div>
 
-        <div id="view-builder" class="space-y-4">
+        <div id="view-builder" class="hidden">
             <div class="card">
-                <h2 class="label-xs text-blue-600">Daily Roster Checklist</h2>
-                <div id="checklist" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
+                <h2 class="label-xs">Builder View Loaded</h2>
+                <p class="text-sm text-slate-500">Roster data is synced.</p>
             </div>
         </div>
-
     </main>
 
     <script>
+        // Load data on start
         let runners = JSON.parse(localStorage.getItem('runners') || "[]");
-        let selDate = new Date().toISOString().split('T')[0];
 
         function switchView(view) {
-            ['builder','roster'].forEach(v => {
-                document.getElementById('view-'+v).classList.toggle('hidden', view !== v);
-                document.getElementById('nav-'+v).classList.toggle('active-tab', view === v);
-            });
-            renderAll();
+            document.getElementById('view-roster').classList.toggle('hidden', view !== 'roster');
+            document.getElementById('view-builder').classList.toggle('hidden', view !== 'builder');
+            document.getElementById('nav-roster').classList.toggle('active-tab', view === 'roster');
+            document.getElementById('nav-builder').classList.toggle('active-tab', view === 'builder');
+            renderRoster();
         }
 
-        // --- THE FIX: ADD/UPDATE RUNNER ---
-        function addRunner() {
-            const editId = document.getElementById('edit-runner-id').value;
+        function saveRunner() {
+            const id = document.getElementById('edit-runner-id').value;
             const name = document.getElementById('run-name').value;
-            if(!name) return alert("Please enter a name.");
+            if(!name) return alert("Enter a name.");
 
-            const runnerObj = {
-                id: editId || Math.random().toString(36).substr(2, 9),
+            const runnerData = {
+                id: id || Math.random().toString(36).substr(2, 9),
                 name: name,
                 email: document.getElementById('run-email').value,
                 year: document.getElementById('run-year').value,
@@ -101,31 +95,34 @@
                     "400": document.getElementById('pb-400').value,
                     "800": document.getElementById('pb-800').value,
                     "1600": document.getElementById('pb-1600').value,
-                    "3000": document.getElementById('pb-3000').value,
                     "3200": document.getElementById('pb-3200').value,
-                    "5000": document.getElementById('pb-5000').value
+                    "5k": document.getElementById('pb-5k').value
                 }
             };
 
-            if (editId) {
-                // Update existing
-                const index = runners.findIndex(r => r.id === editId);
-                if(index !== -1) runners[index] = runnerObj;
+            // ACTUAL EDIT LOGIC:
+            if (id) {
+                // If we have an ID, find where they are in the list and update them
+                const index = runners.findIndex(r => r.id === id);
+                if (index !== -1) {
+                    runners[index] = runnerData;
+                }
             } else {
-                // Add new
-                runners.push(runnerObj);
+                // Otherwise, it's a new runner
+                runners.push(runnerData);
             }
 
             localStorage.setItem('runners', JSON.stringify(runners));
-            resetRosterForm();
-            renderAll();
+            clearForm();
+            renderRoster();
         }
 
         function editRunner(id) {
-            const r = runners.find(i => i.id === id);
-            if(!r) return;
+            // Find the runner by ID
+            const r = runners.find(item => item.id === id);
+            if (!r) return;
 
-            // Fill Form
+            // Fill the form fields
             document.getElementById('edit-runner-id').value = r.id;
             document.getElementById('run-name').value = r.name;
             document.getElementById('run-email').value = r.email || "";
@@ -134,71 +131,74 @@
             
             // Fill PBs
             const pbs = r.pbs || {};
-            Object.keys(pbs).forEach(dist => {
-                const el = document.getElementById('pb-' + dist);
-                if(el) el.value = pbs[dist] || "";
-            });
+            document.getElementById('pb-100').value = pbs['100'] || "";
+            document.getElementById('pb-200').value = pbs['200'] || "";
+            document.getElementById('pb-400').value = pbs['400'] || "";
+            document.getElementById('pb-800').value = pbs['800'] || "";
+            document.getElementById('pb-1600').value = pbs['1600'] || "";
+            document.getElementById('pb-3200').value = pbs['3200'] || "";
+            document.getElementById('pb-5k').value = pbs['5k'] || "";
 
-            // UI Changes
-            document.getElementById('form-title').innerText = "Editing: " + r.name;
-            document.getElementById('add-runner-btn').innerText = "Update Athlete Profile";
-            document.getElementById('add-runner-btn').classList.replace('bg-blue-600', 'bg-emerald-600');
-            
+            // Visual update to form
+            document.getElementById('form-header').innerText = "Editing: " + r.name;
+            document.getElementById('save-btn').innerText = "Update Athlete Data";
+            document.getElementById('save-btn').classList.replace('bg-blue-600', 'bg-emerald-600');
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function resetRosterForm() {
+        function clearForm() {
             document.getElementById('edit-runner-id').value = "";
-            document.getElementById('form-title').innerText = "Add New Athlete";
-            document.getElementById('add-runner-btn').innerText = "Save Athlete Profile";
-            document.getElementById('add-runner-btn').classList.add('bg-blue-600');
-            document.getElementById('add-runner-btn').classList.remove('bg-emerald-600');
+            document.getElementById('run-name').value = "";
+            document.getElementById('run-email').value = "";
+            document.getElementById('run-year').value = "";
+            document.getElementById('run-exp').value = "";
+            document.getElementById('pb-100').value = "";
+            document.getElementById('pb-200').value = "";
+            document.getElementById('pb-400').value = "";
+            document.getElementById('pb-800').value = "";
+            document.getElementById('pb-1600').value = "";
+            document.getElementById('pb-3200').value = "";
+            document.getElementById('pb-5k').value = "";
             
-            ['run-name','run-email','run-year','run-exp','pb-100','pb-200','pb-400','pb-800','pb-1600','pb-3000','pb-3200','pb-5000'].forEach(id => {
-                document.getElementById(id).value = "";
-            });
+            document.getElementById('form-header').innerText = "Add New Athlete";
+            document.getElementById('save-btn').innerText = "Save Athlete";
+            document.getElementById('save-btn').className = "flex-1 bg-blue-600 hover:bg-blue-500 p-3 rounded font-black uppercase text-xs transition";
         }
 
         function removeRunner(id) {
-            if(confirm("Permanently delete this athlete?")) {
+            if(confirm("Delete athlete?")) {
                 runners = runners.filter(r => r.id !== id);
                 localStorage.setItem('runners', JSON.stringify(runners));
-                renderAll();
+                renderRoster();
             }
         }
 
-        function renderAll() {
-            // Checklist for Builder
-            document.getElementById('checklist').innerHTML = runners.map(r => `
-                <label class="flex items-center gap-2 p-2 bg-white border rounded text-[10px] font-black cursor-pointer">
-                    <input type="checkbox" class="run-check" value="${r.name}"> ${r.name}
-                </label>
-            `).join('');
-
-            // Roster Cards
-            document.getElementById('rosterList').innerHTML = runners.map(r => `
-                <div class="card flex flex-col justify-between border-l-4 border-blue-500">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <div class="font-black uppercase text-sm">${r.name}</div>
-                            <div class="text-[10px] text-blue-600 font-bold">${r.year || 'No Year'} • ${r.exp || '0'}yr Exp</div>
+        function renderRoster() {
+            const grid = document.getElementById('roster-grid');
+            grid.innerHTML = runners.map(r => `
+                <div class="card border-l-4 border-blue-500 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <div class="font-black uppercase text-sm">${r.name}</div>
+                                <div class="text-[10px] text-blue-600 font-bold">${r.year || 'N/A'} • ${r.exp || '0'}yr Exp</div>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="editRunner('${r.id}')" class="p-2 bg-slate-50 rounded hover:bg-blue-100">✏️</button>
+                                <button onclick="removeRunner('${r.id}')" class="p-2 bg-slate-50 rounded hover:bg-red-100">🗑️</button>
+                            </div>
                         </div>
-                        <div class="flex gap-2">
-                            <button onclick="editRunner('${r.id}')" class="bg-slate-100 p-2 rounded hover:bg-blue-100 transition">✏️</button>
-                            <button onclick="removeRunner('${r.id}')" class="bg-slate-100 p-2 rounded hover:bg-red-100 transition">🗑️</button>
+                        <div class="flex flex-wrap gap-1 mb-2">
+                            ${Object.entries(r.pbs || {}).filter(([k,v]) => v).map(([k,v]) => `<span class="pb-tag">${k}: ${v}</span>`).join('')}
                         </div>
-                    </div>
-                    <div class="flex flex-wrap gap-1 mt-2">
-                        ${Object.entries(r.pbs || {}).filter(([d, v]) => v).map(([dist, val]) => `
-                            <span class="pb-tag">${dist}m: ${val}</span>
-                        `).join('') || '<span class="text-[9px] italic text-slate-300">No PBs recorded</span>'}
                     </div>
                 </div>
             `).join('');
         }
 
-        // Start on Roster view for verification
-        switchView('roster');
+        // Initial Load
+        renderRoster();
     </script>
 </body>
 </html>
